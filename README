@@ -3,7 +3,9 @@
 NCS Panda involves designing and developing a web-based E-Portal that allows users to browse menus, place orders, and receive confirmation before reaching the food outlet.
 
 ## Setting Up Docker Environments
+
 ### Running on Corporate Laptop
+
 1. Press Win + R → type certmgr.msc → Enter
 2. Go to Trusted Root Certification Authorities → Certificates.
 3. Find the certificate that matches your company/proxy name. e.g. zcaler
@@ -13,10 +15,13 @@ NCS Panda involves designing and developing a web-based E-Portal that allows use
 	Base-64 encoded X.509 (.CER).
 	Save as zcaler.crt in backend folder
 6. docker compose -p ncs-panda -f docker/docker-compose.dev.corp.yml up --build
+
 ### Running on Personal Laptop
+
 1. docker compose -p ncs-panda -f docker/docker-compose.dev.yml up --build
 
 ## Setting Up Database
+
 1. Run npx prisma migrate dev --name init_database
 -  If error perform the below command
 ```
