@@ -7,11 +7,24 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum RoleName {
+  ADMIN
+  STAFF
+  CUSTOMER
+}
+
+model Role {
+  id    Int       @id @default(autoincrement())
+  name  RoleName  @unique
+  users User[]
+}
+
 model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
-  password  String
-  role      String   @default("USER")
+  password  String   // hash, not plain text
+  roleId    Int
+  role      Role     @relation(fields: [roleId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
