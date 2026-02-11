@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ncs
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ncs_panda_staging
+    volumes:
+      - db_data_staging:/var/lib/postgresql/data
+
+  backend:
+    build: ../backend
+    working_dir: /app
+    environment:
+      DATABASE_URL: postgres://ncs:password@db:5432/ncs_panda_staging
+      NODE_ENV: staging
+    depends_on:
+      - db
+
+  frontend:
+    build: ../frontend
+    working_dir: /app
+    environment:
+      VITE_API_BASE_URL: http://backend:3000
+    depends_on:
+      - backend
+
+volumes:
+  db_data_staging:
