@@ -1,44 +1,57 @@
 import { useEffect, useState } from 'react';
-
-type HealthResponse = {
-  status: string;
-  timestamp: string;
-};
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000';
+import { Session } from '@supabase/supabase-js';
+import { supabase } from './services/supabase';
+import LoginForm from './components/LoginForm';
 
 function App() {
-  const [health, setHealth] = useState<HealthResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/health`)
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = (await res.json()) as HealthResponse;
-        setHealth(data);
-      })
-      .catch((err) => {
-        setError(err.message);
-      });
+    // Check current session on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    // Listen for auth state changes (login, logout, token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setSession(session);
+      },
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setSession(null);
+  };
+
+  if (loading) {
+    return <p style={{ padding: '2rem', fontFamily: 'sans-serif' }}>Loading...</p>;
+  }
+
+  // Not logged in — show login form
+  if (!session) {
+    return (
+      <main style={{ fontFamily: 'sans-serif', padding: '2rem' }}>
+        <h1>NCS Panda</h1>
+        <LoginForm onSuccess={() => {}} />
+      </main>
+    );
+  }
+
+  // Logged in — show user info
   return (
     <main style={{ fontFamily: 'sans-serif', padding: '2rem' }}>
-      <h1>NCSPanda Frontend</h1>
-      <p>This is a minimal test page.</p>
-
-      <section style={{ marginTop: '1.5rem' }}>
-        <h2>Backend Health</h2>
-        {!health && !error && <p>Checking backend…</p>}
-        {health && (
-          <pre>{JSON.stringify(health, null, 2)}</pre>
-        )}
-        {error && (
-          <p style={{ color: 'red' }}>Error: {error}</p>
-        )}
-      </section>
+      <h1>NCS Panda</h1>
+      <p>Logged in as: <strong>{session.user.email}</strong></p>
+      <p>User ID: <code>{session.user.id}</code></p>
+      <button onClick={handleLogout} style={{ padding: '0.5rem 1.5rem', marginTop: '1rem' }}>
+        Sign Out
+      </button>
     </main>
   );
 }

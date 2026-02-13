@@ -21,11 +21,7 @@ logs/
 .DS_Store
 .vscode/
 .idea/
-
-# Env files
-.env
-.env.*
-!.env.example
+nul
 
 # Corporate certs
 zcaler.crt.cer
