@@ -1,31 +1,72 @@
-# NCS-Panda
+# NCS Panda
 
-NCS Panda involves designing and developing a web-based E-Portal that allows users to browse menus, place orders, and receive confirmation before reaching the food outlet.
+A web-based E-Portal for browsing menus, placing orders, and receiving confirmation before reaching the food outlet.
 
-## Setting Up Docker Environments
+## Prerequisites
 
-### Running on Corporate Laptop
+- Node.js 18+
+- Supabase project ([supabase.com](https://supabase.com)) — get project URL and anon key for auth  
+- For Docker: Docker Desktop installed and running
 
-1. Press Win + R → type certmgr.msc → Enter
-2. Go to Trusted Root Certification Authorities → Certificates.
-3. Find the certificate that matches your company/proxy name. e.g. zcaler
-4. Right-click it → All Tasks → Export….
-5. Wizard:
-	No, do not export the private key.
-	Base-64 encoded X.509 (.CER).
-	Save as zcaler.crt in backend folder
-6. docker compose -p ncs-panda -f docker/docker-compose.dev.corp.yml up --build
+---
 
-### Running on Personal Laptop
+## Option 1: Docker (full stack in one go)
 
-1. docker compose -p ncs-panda -f docker/docker-compose.dev.yml up --build
+From project root:
 
-## Setting Up Database
-
-1. Run npx prisma migrate dev --name init_database
--  If error perform the below command
+```bash
+docker compose -p ncs-panda -f docker/docker-compose.dev.yml up --build
 ```
-$env:NODE_TLS_REJECT_UNAUTHORIZED = "0"
-Run npx prisma migrate dev --name init_database
-Remove-Item Env:NODE_TLS_REJECT_UNAUTHORIZED
+
+- Frontend: http://localhost:5173  
+- Backend: http://localhost:3000  
+
+If backend exits with code 127, run `npm install` in `backend/` once, then run the command again.
+
+**First-time DB setup:** with the stack up, in another terminal:
+
+```bash
+cd backend
+npx prisma migrate dev --name init_database
 ```
+
+(Ensure `backend/.env` has `DATABASE_URL=postgresql://ncs:password@localhost:55432/ncs_panda_dev` when using Docker for the app.)
+
+---
+
+## Option 2: Local (npm run dev)
+
+You need a running Postgres (e.g. install locally or run only the DB with Docker: `docker compose -p ncs-panda -f docker/docker-compose.dev.yml up -d db`). Use DB `ncs_panda_dev`, user `ncs`, password `password`, port `55432` (Docker) or `5432` (local).
+
+**Backend**
+
+```bash
+cd backend
+copy .env.example .env
+# Edit .env: set DATABASE_URL
+npm install
+npx prisma migrate dev --name init_database
+npm run start:dev
+```
+
+**Frontend** (new terminal)
+
+```bash
+cd frontend
+copy .env.example .env
+# Edit .env: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_API_BASE_URL=http://localhost:3000
+npm install
+npm run dev
+```
+
+- Frontend: http://localhost:5173  
+- Backend: http://localhost:3000  
+
+---
+
+## Env files
+
+- `backend/.env` — copy from `backend/.env.example`, set `DATABASE_URL`.
+- `frontend/.env` — copy from `frontend/.env.example`, set Supabase URL, anon key, and `VITE_API_BASE_URL`.
+
+Don’t commit `.env`; it’s gitignored.
