@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabase';
 import LoginForm from './components/LoginForm';
+import RegisterForm from './components/RegisterForm';
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showRegister, setShowRegister] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -47,7 +49,17 @@ function App() {
           <span className="app-logo">NCS Panda</span>
         </header>
         <main className="app-main">
-          <LoginForm onSuccess={() => {}} />
+          {showRegister ? (
+            <RegisterForm
+              onSuccess={() => setShowRegister(false)}
+              onSwitchToLogin={() => setShowRegister(false)}
+            />
+          ) : (
+            <LoginForm
+              onSuccess={() => {}}
+              onSwitchToLogin={() => setShowRegister(true)}
+            />
+          )}
         </main>
       </div>
     );

@@ -1,7 +1,13 @@
 import { useState, FormEvent } from 'react';
 import { supabase } from '../services/supabase';
 
-export default function LoginForm({ onSuccess }: { onSuccess: () => void }) {
+export default function LoginForm({
+  onSuccess,
+  onSwitchToLogin,
+}: {
+  onSuccess: () => void;
+  onSwitchToLogin?: () => void;
+}) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -64,6 +70,15 @@ export default function LoginForm({ onSuccess }: { onSuccess: () => void }) {
       <button type="submit" disabled={loading} className="btn btn-primary">
         {loading ? 'Signing in…' : 'Sign in'}
       </button>
+
+      {onSwitchToLogin && (
+        <p style={{ marginTop: '1.25rem', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
+          Don&apos;t have an account?{' '}
+          <button type="button" className="btn-link" onClick={onSwitchToLogin}>
+            Sign up
+          </button>
+        </p>
+      )}
     </form>
   );
 }
