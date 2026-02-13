@@ -57,7 +57,7 @@ function App() {
           ) : (
             <LoginForm
               onSuccess={() => {}}
-              onSwitchToLogin={() => setShowRegister(true)}
+              onSwitchToRegister={() => setShowRegister(true)}
             />
           )}
         </main>

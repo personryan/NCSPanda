@@ -3,10 +3,10 @@ import { supabase } from '../services/supabase';
 
 export default function LoginForm({
   onSuccess,
-  onSwitchToLogin,
+  onSwitchToRegister,
 }: {
   onSuccess: () => void;
-  onSwitchToLogin?: () => void;
+  onSwitchToRegister?: () => void;
 }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -71,10 +71,10 @@ export default function LoginForm({
         {loading ? 'Signing in…' : 'Sign in'}
       </button>
 
-      {onSwitchToLogin && (
+      {onSwitchToRegister && (
         <p style={{ marginTop: '1.25rem', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
           Don&apos;t have an account?{' '}
-          <button type="button" className="btn-link" onClick={onSwitchToLogin}>
+          <button type="button" className="btn-link" onClick={onSwitchToRegister}>
             Sign up
           </button>
         </p>
