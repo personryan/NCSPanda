@@ -28,6 +28,12 @@ ON public.users FOR UPDATE
 TO authenticated
 USING (auth.uid() = user_id);
 
+-- Users can insert their own profile (e.g. after signup; backend may use direct connection that bypasses RLS)
+CREATE POLICY "Users can insert own profile"
+ON public.users FOR INSERT
+TO authenticated
+WITH CHECK (auth.uid() = user_id);
+
 -- Admins can view all users
 CREATE POLICY "Admins can view all users"
 ON public.users FOR SELECT
