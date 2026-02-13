@@ -27,25 +27,27 @@ export default function LoginForm({ onSuccess }: { onSuccess: () => void }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ maxWidth: 360 }}>
-      <h2>Login</h2>
+    <form onSubmit={handleSubmit} className="card">
+      <h2 style={{ marginBottom: '1.5rem' }}>Sign in</h2>
 
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && <div className="alert-error" role="alert">{error}</div>}
 
-      <div style={{ marginBottom: '0.75rem' }}>
-        <label htmlFor="email" style={{ display: 'block', marginBottom: 4 }}>Email</label>
+      <div className="form-group">
+        <label htmlFor="email" className="form-label">Email</label>
         <input
           id="email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          style={{ width: '100%', padding: '0.5rem' }}
+          className="form-input"
+          placeholder="you@example.com"
+          autoComplete="email"
         />
       </div>
 
-      <div style={{ marginBottom: '0.75rem' }}>
-        <label htmlFor="password" style={{ display: 'block', marginBottom: 4 }}>Password</label>
+      <div className="form-group">
+        <label htmlFor="password" className="form-label">Password</label>
         <input
           id="password"
           type="password"
@@ -53,12 +55,14 @@ export default function LoginForm({ onSuccess }: { onSuccess: () => void }) {
           onChange={(e) => setPassword(e.target.value)}
           required
           minLength={8}
-          style={{ width: '100%', padding: '0.5rem' }}
+          className="form-input"
+          placeholder="••••••••"
+          autoComplete="current-password"
         />
       </div>
 
-      <button type="submit" disabled={loading} style={{ padding: '0.5rem 1.5rem' }}>
-        {loading ? 'Signing in...' : 'Sign In'}
+      <button type="submit" disabled={loading} className="btn btn-primary">
+        {loading ? 'Signing in…' : 'Sign in'}
       </button>
     </form>
   );

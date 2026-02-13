@@ -8,19 +8,14 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check current session on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
     });
 
-    // Listen for auth state changes (login, logout, token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session);
-      },
+      (_event, session) => setSession(session),
     );
-
     return () => subscription.unsubscribe();
   }, []);
 
@@ -30,29 +25,55 @@ function App() {
   };
 
   if (loading) {
-    return <p style={{ padding: '2rem', fontFamily: 'sans-serif' }}>Loading...</p>;
-  }
-
-  // Not logged in — show login form
-  if (!session) {
     return (
-      <main style={{ fontFamily: 'sans-serif', padding: '2rem' }}>
-        <h1>NCS Panda</h1>
-        <LoginForm onSuccess={() => {}} />
-      </main>
+      <div className="app-shell">
+        <header className="app-header">
+          <span className="app-logo">NCS Panda</span>
+        </header>
+        <main className="app-main">
+          <div className="loading-wrap">
+            <div className="loading-spinner" aria-hidden />
+            <span>Loading…</span>
+          </div>
+        </main>
+      </div>
     );
   }
 
-  // Logged in — show user info
+  if (!session) {
+    return (
+      <div className="app-shell">
+        <header className="app-header">
+          <span className="app-logo">NCS Panda</span>
+        </header>
+        <main className="app-main">
+          <LoginForm onSuccess={() => {}} />
+        </main>
+      </div>
+    );
+  }
+
   return (
-    <main style={{ fontFamily: 'sans-serif', padding: '2rem' }}>
-      <h1>NCS Panda</h1>
-      <p>Logged in as: <strong>{session.user.email}</strong></p>
-      <p>User ID: <code>{session.user.id}</code></p>
-      <button onClick={handleLogout} style={{ padding: '0.5rem 1.5rem', marginTop: '1rem' }}>
-        Sign Out
-      </button>
-    </main>
+    <div className="app-shell">
+      <header className="app-header">
+        <span className="app-logo">NCS Panda</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <span style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
+            {session.user.email}
+          </span>
+          <button type="button" onClick={handleLogout} className="btn btn-ghost">
+            Sign out
+          </button>
+        </div>
+      </header>
+      <main className="app-main">
+        <div className="card dashboard">
+          <h1>Welcome back</h1>
+          <p className="user-email">{session.user.email}</p>
+          <p className="user-meta">User ID: {session.user.id}</p>
+        </div>
+      </main>
+    </div>
   );
 }
 
