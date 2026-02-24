@@ -69,6 +69,19 @@ function App() {
     );
   }
 
+  const role = (session.user.user_metadata?.role as 'customer' | 'vendor' | undefined) || 'customer';
+  const canUseCustomer = role === 'customer';
+  const canUseVendor = role === 'vendor';
+
+  useEffect(() => {
+    if (canUseVendor && activePage !== 'vendor') {
+      setActivePage('vendor');
+    }
+    if (canUseCustomer && activePage === 'vendor') {
+      setActivePage('menu');
+    }
+  }, [canUseVendor, canUseCustomer, activePage]);
+
   return (
     <div className="app-shell">
       <header className="app-header">
@@ -89,6 +102,7 @@ function App() {
               type="button"
               className={`btn ${activePage === 'menu' ? 'btn-primary' : 'btn-ghost'}`}
               onClick={() => setActivePage('menu')}
+              disabled={!canUseCustomer}
             >
               Browse Menu
             </button>
@@ -96,6 +110,7 @@ function App() {
               type="button"
               className={`btn ${activePage === 'order' ? 'btn-primary' : 'btn-ghost'}`}
               onClick={() => setActivePage('order')}
+              disabled={!canUseCustomer}
             >
               Place Order
             </button>
@@ -103,12 +118,21 @@ function App() {
               type="button"
               className={`btn ${activePage === 'vendor' ? 'btn-primary' : 'btn-ghost'}`}
               onClick={() => setActivePage('vendor')}
+              disabled={!canUseVendor}
             >
               Vendor Dashboard
             </button>
           </div>
         </div>
-        {activePage === 'menu' ? <MenuPage /> : activePage === 'order' ? <OrdersPage /> : <VendorDashboardPage />}
+        {activePage === 'menu' && canUseCustomer ? <MenuPage /> : null}
+        {activePage === 'order' && canUseCustomer ? <OrdersPage /> : null}
+        {activePage === 'vendor' && canUseVendor ? <VendorDashboardPage /> : null}
+        {(activePage === 'vendor' && !canUseVendor) ||
+        ((activePage === 'menu' || activePage === 'order') && !canUseCustomer) ? (
+          <div className="menu-surface">
+            <p className="alert-error">You do not have permission to access this module with your current role.</p>
+          </div>
+        ) : null}
       </main>
     </div>
   );

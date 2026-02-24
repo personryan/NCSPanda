@@ -74,7 +74,10 @@ export async function fetchPickupSlots(outletId: string, date: string): Promise<
 export async function createOrder(payload: CreateOrderPayload) {
   const response = await fetch(`${API_BASE}/api/orders`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'x-user-role': 'customer',
+    },
     body: JSON.stringify(payload),
   });
 
