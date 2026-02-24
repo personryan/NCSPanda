@@ -5,9 +5,10 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { MenuModule } from './menu/menu.module';
 import { PickupSlotsModule } from './pickup-slots/pickup-slots.module';
+import { OrdersModule } from './orders/orders.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, UsersModule, MenuModule, PickupSlotsModule],
+  imports: [PrismaModule, AuthModule, UsersModule, MenuModule, PickupSlotsModule, OrdersModule],
   controllers: [HealthController],
 })
 export class AppModule {}
