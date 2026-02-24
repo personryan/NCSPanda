@@ -3,7 +3,7 @@ import { MenuService } from '../menu/menu.service';
 import { PickupSlotsService } from '../pickup-slots/pickup-slots.service';
 import { CreateOrderDto, CreateOrderItemDto } from './dto/create-order.dto';
 
-interface StoredOrder {
+export interface StoredOrder {
   orderId: string;
   outletId: string;
   customerId: string;
@@ -66,6 +66,23 @@ export class OrdersService {
     this.slotUsage.set(slotKey, currentUsage + 1);
 
     return order;
+  }
+
+  listOrdersForVendor(filters: {
+    outletId: string;
+    slotDate?: string;
+    status?: 'received' | 'preparing' | 'ready';
+  }): StoredOrder[] {
+    return this.orders
+      .filter((order) => order.outletId === filters.outletId)
+      .filter((order) => (filters.slotDate ? order.slotDate === filters.slotDate : true))
+      .filter((order) => (filters.status ? order.status === filters.status : true))
+      .sort((a, b) => {
+        if (a.slotDate === b.slotDate) {
+          return b.createdAt.localeCompare(a.createdAt);
+        }
+        return a.slotDate.localeCompare(b.slotDate);
+      });
   }
 
   private normalizeItems(
