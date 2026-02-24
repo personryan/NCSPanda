@@ -3,6 +3,7 @@ import { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabase';
 import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
+import MenuPage from './pages/Menu';
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);
@@ -78,12 +79,8 @@ function App() {
           </button>
         </div>
       </header>
-      <main className="app-main">
-        <div className="card dashboard">
-          <h1>Welcome back</h1>
-          <p className="user-email">{session.user.email}</p>
-          <p className="user-meta">User ID: {session.user.id}</p>
-        </div>
+      <main className="app-main app-main-page">
+        <MenuPage />
       </main>
     </div>
   );

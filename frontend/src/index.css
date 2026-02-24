@@ -260,3 +260,103 @@ a:hover {
   justify-content: center;
   flex-wrap: wrap;
 }
+
+.app-main-page {
+  align-items: flex-start;
+}
+
+.menu-page {
+  width: 100%;
+  max-width: 960px;
+}
+
+.menu-page-header p {
+  margin-top: 0;
+  color: var(--color-text-muted);
+}
+
+.menu-toolbar {
+  width: min(360px, 100%);
+  margin: 1rem 0;
+}
+
+.menu-surface {
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+}
+
+.menu-groups {
+  display: grid;
+  gap: 1rem;
+}
+
+.menu-group h2 {
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+.menu-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: 1fr;
+}
+
+.menu-item-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.75rem;
+  background: #fff;
+}
+
+.menu-item-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.menu-item-header h3 {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.menu-item-desc {
+  margin: 0.35rem 0;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.menu-item-price {
+  margin: 0;
+  font-weight: 600;
+}
+
+.status-pill {
+  font-size: 0.75rem;
+  border-radius: 999px;
+  padding: 0.2rem 0.5rem;
+  white-space: nowrap;
+}
+
+.status-available {
+  background: #e8f6ee;
+  color: #166534;
+}
+
+.status-limited {
+  background: #fff7e6;
+  color: #92400e;
+}
+
+.status-sold_out {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+@media (min-width: 720px) {
+  .menu-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
