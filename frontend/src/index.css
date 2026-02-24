@@ -414,6 +414,30 @@ a:hover {
   font-size: 0.9rem;
 }
 
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.vendor-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 700px;
+}
+
+.vendor-table th,
+.vendor-table td {
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  padding: 0.6rem;
+  vertical-align: top;
+}
+
+.vendor-table th {
+  background: #f8fafc;
+  font-size: 0.85rem;
+}
+
 @media (min-width: 720px) {
   .menu-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

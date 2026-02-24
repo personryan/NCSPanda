@@ -34,6 +34,17 @@ export interface CreateOrderPayload {
   customerId?: string;
 }
 
+export interface VendorIncomingOrder {
+  orderId: string;
+  customerId: string;
+  outletId: string;
+  slotDate: string;
+  slotId: string;
+  status: string;
+  createdAt: string;
+  itemsSummary: string;
+}
+
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000').replace(/\/$/, '');
 
 export async function fetchMenuByOutlet(outletId: string): Promise<OutletMenu> {
@@ -73,4 +84,23 @@ export async function createOrder(payload: CreateOrderPayload) {
   }
 
   return response.json() as Promise<{ orderId: string; status: string }>;
+}
+
+export async function fetchVendorIncomingOrders(outletId: string): Promise<VendorIncomingOrder[]> {
+  const response = await fetch(
+    `${API_BASE}/api/vendor/orders?vendorOutletId=${encodeURIComponent(outletId)}`,
+    {
+      headers: {
+        'x-user-role': 'vendor',
+        'x-vendor-outlet-id': outletId,
+      },
+    },
+  );
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Failed to fetch vendor orders (${response.status})`);
+  }
+
+  return response.json() as Promise<VendorIncomingOrder[]>;
 }

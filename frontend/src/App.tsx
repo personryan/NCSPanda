@@ -5,12 +5,13 @@ import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
 import MenuPage from './pages/Menu';
 import OrdersPage from './pages/Orders';
+import VendorDashboardPage from './pages/VendorDashboard';
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [showRegister, setShowRegister] = useState(false);
-  const [activePage, setActivePage] = useState<'menu' | 'order'>('menu');
+  const [activePage, setActivePage] = useState<'menu' | 'order' | 'vendor'>('menu');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -98,9 +99,16 @@ function App() {
             >
               Place Order
             </button>
+            <button
+              type="button"
+              className={`btn ${activePage === 'vendor' ? 'btn-primary' : 'btn-ghost'}`}
+              onClick={() => setActivePage('vendor')}
+            >
+              Vendor Dashboard
+            </button>
           </div>
         </div>
-        {activePage === 'menu' ? <MenuPage /> : <OrdersPage />}
+        {activePage === 'menu' ? <MenuPage /> : activePage === 'order' ? <OrdersPage /> : <VendorDashboardPage />}
       </main>
     </div>
   );
