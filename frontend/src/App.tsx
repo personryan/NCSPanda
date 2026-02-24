@@ -4,11 +4,13 @@ import { supabase } from './services/supabase';
 import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
 import MenuPage from './pages/Menu';
+import OrdersPage from './pages/Orders';
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [showRegister, setShowRegister] = useState(false);
+  const [activePage, setActivePage] = useState<'menu' | 'order'>('menu');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -80,7 +82,25 @@ function App() {
         </div>
       </header>
       <main className="app-main app-main-page">
-        <MenuPage />
+        <div className="menu-page" style={{ marginBottom: '0.5rem' }}>
+          <div className="dashboard-actions" style={{ justifyContent: 'flex-start' }}>
+            <button
+              type="button"
+              className={`btn ${activePage === 'menu' ? 'btn-primary' : 'btn-ghost'}`}
+              onClick={() => setActivePage('menu')}
+            >
+              Browse Menu
+            </button>
+            <button
+              type="button"
+              className={`btn ${activePage === 'order' ? 'btn-primary' : 'btn-ghost'}`}
+              onClick={() => setActivePage('order')}
+            >
+              Place Order
+            </button>
+          </div>
+        </div>
+        {activePage === 'menu' ? <MenuPage /> : <OrdersPage />}
       </main>
     </div>
   );
