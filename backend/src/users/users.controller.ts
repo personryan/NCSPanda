@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Get, Body, UseGuards, Req, Inject } from '@nestjs/common';
 import { Request } from 'express';
 import { UsersService } from './users.service';
 import { CreateProfileDto } from './dto/create-profile.dto';
@@ -7,7 +7,7 @@ import { AuthUser } from '../auth/supabase-auth.service';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(@Inject(UsersService) private readonly usersService: UsersService) {}
 
   @Post('profile')
   @UseGuards(AuthGuard)

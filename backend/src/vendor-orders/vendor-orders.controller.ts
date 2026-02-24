@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Headers,
+  Inject,
   Query,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -10,7 +11,9 @@ import { VendorOrdersService } from './vendor-orders.service';
 
 @Controller('vendor/orders')
 export class VendorOrdersController {
-  constructor(private readonly vendorOrdersService: VendorOrdersService) {}
+  constructor(
+    @Inject(VendorOrdersService) private readonly vendorOrdersService: VendorOrdersService,
+  ) {}
 
   @Get()
   getIncomingOrders(

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { MenuService } from '../menu/menu.service';
 import { PickupSlotsService } from '../pickup-slots/pickup-slots.service';
 import { CreateOrderDto, CreateOrderItemDto } from './dto/create-order.dto';
@@ -25,8 +25,8 @@ export class OrdersService {
   private readonly slotUsage = new Map<string, number>();
 
   constructor(
-    private readonly menuService: MenuService,
-    private readonly pickupSlotsService: PickupSlotsService,
+    @Inject(MenuService) private readonly menuService: MenuService,
+    @Inject(PickupSlotsService) private readonly pickupSlotsService: PickupSlotsService,
   ) {}
 
   createOrder(payload: CreateOrderDto): StoredOrder {

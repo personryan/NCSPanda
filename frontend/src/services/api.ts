@@ -107,3 +107,21 @@ export async function fetchVendorIncomingOrders(outletId: string): Promise<Vendo
 
   return response.json() as Promise<VendorIncomingOrder[]>;
 }
+export async function fetchCurrentUserProfile(accessToken: string) {
+  const response = await fetch(`${API_BASE}/api/users/me`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Failed to fetch user profile (${response.status})`);
+  }
+
+  return response.json() as Promise<{
+    user_id: string;
+    role?: string | null;
+    role_id?: number | null;
+  }>;
+}

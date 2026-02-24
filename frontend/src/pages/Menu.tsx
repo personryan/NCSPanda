@@ -38,7 +38,7 @@ export default function MenuPage() {
     () => outletOptions.find((o) => o.id === outletId)?.label || outletId,
     [outletId],
   );
-
+  
   return (
     <section className="menu-page">
       <div className="menu-page-header">
