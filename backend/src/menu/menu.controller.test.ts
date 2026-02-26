@@ -3,10 +3,14 @@ import { BadRequestException } from '@nestjs/common';
 import { MenuController } from './menu.controller';
 import { MenuService } from './menu.service';
 
-describe('MenuController', () => {
-  const controller = new MenuController(new MenuService());
+const mockPrisma = {
+  outlet: { findUnique: async () => null },
+} as any;
 
-  it('rejects request without outletId', () => {
-    expect(() => controller.getOutletMenu(undefined)).toThrow(BadRequestException);
+describe('MenuController', () => {
+  const controller = new MenuController(new MenuService(mockPrisma));
+
+  it('rejects request without outletId', async () => {
+    await expect(controller.getOutletMenu(undefined)).rejects.toThrow(BadRequestException);
   });
 });

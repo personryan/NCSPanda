@@ -1,14 +1,29 @@
 import { UnauthorizedException } from '@nestjs/common';
-import { describe, expect, it } from 'vitest';
-import { MenuService } from '../menu/menu.service';
-import { OrdersService } from '../orders/orders.service';
-import { PickupSlotsService } from '../pickup-slots/pickup-slots.service';
+import { describe, expect, it, vi } from 'vitest';
 import { VendorOrdersController } from './vendor-orders.controller';
 import { VendorOrdersService } from './vendor-orders.service';
+import { OrdersService } from '../orders/orders.service';
+
+const MOCK_ORDERS = [
+  {
+    orderId: 'ord_test_1',
+    customerId: 'c-1',
+    outletId: 'outlet-b6-chicken-rice',
+    slotDate: '2099-01-01',
+    slotId: 'outlet-b6-chicken-rice-2099-01-01-11:30',
+    status: 'received' as const,
+    createdAt: new Date().toISOString(),
+    items: [{ itemId: 'item-cr-01', name: 'Roasted Chicken Rice', quantity: 1 }],
+  },
+];
+
+const mockOrdersService = {
+  listOrdersForVendor: vi.fn().mockResolvedValue(MOCK_ORDERS),
+} as unknown as OrdersService;
 
 describe('VendorOrdersController', () => {
-  const ordersService = new OrdersService(new MenuService(), new PickupSlotsService());
-  const controller = new VendorOrdersController(new VendorOrdersService(ordersService));
+  const vendorOrdersService = new VendorOrdersService(mockOrdersService);
+  const controller = new VendorOrdersController(vendorOrdersService);
 
   it('blocks unauthorized calls', () => {
     expect(() =>
@@ -16,23 +31,8 @@ describe('VendorOrdersController', () => {
     ).toThrow(UnauthorizedException);
   });
 
-  it('returns only vendor outlet orders and supports filtering', () => {
-    ordersService.createOrder({
-      outletId: 'outlet-b6-chicken-rice',
-      slotDate: '2099-01-01',
-      slotId: 'outlet-b6-chicken-rice-2099-01-01-11:30',
-      items: [{ itemId: 'item-cr-01', quantity: 1 }],
-      customerId: 'c-1',
-    });
-    ordersService.createOrder({
-      outletId: 'outlet-b6-noodles',
-      slotDate: '2099-01-02',
-      slotId: 'outlet-b6-noodles-2099-01-02-11:30',
-      items: [{ itemId: 'item-n-01', quantity: 1 }],
-      customerId: 'c-2',
-    });
-
-    const result = controller.getIncomingOrders(
+  it('returns only vendor outlet orders and supports filtering', async () => {
+    const result = await controller.getIncomingOrders(
       { vendorOutletId: 'outlet-b6-chicken-rice', slotDate: '2099-01-01' },
       'vendor',
       'outlet-b6-chicken-rice',
