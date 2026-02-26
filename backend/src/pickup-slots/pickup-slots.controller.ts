@@ -9,7 +9,7 @@ export class PickupSlotsController {
   ) {}
 
   @Get()
-  getPickupSlots(@Query() query: PickupSlotsQueryDto): PickupSlotView[] {
+  async getPickupSlots(@Query() query: PickupSlotsQueryDto): Promise<PickupSlotView[]> {
     return this.pickupSlotsService.getSlots(query.outletId, query.date);
   }
 }

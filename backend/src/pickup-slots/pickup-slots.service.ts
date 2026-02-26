@@ -1,4 +1,5 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 
 export interface PickupSlotView {
   slotId: string;
@@ -10,39 +11,54 @@ export interface PickupSlotView {
   isAvailable: boolean;
 }
 
-const OUTLET_SLOT_CAPACITY: Record<string, number> = {
-  'outlet-b6-chicken-rice': 18,
-  'outlet-b6-noodles': 14,
-};
+const TIME_BLOCKS: [string, string][] = [
+  ['11:30', '11:45'],
+  ['11:45', '12:00'],
+  ['12:00', '12:15'],
+  ['12:15', '12:30'],
+  ['12:30', '12:45'],
+  ['12:45', '13:00'],
+];
 
 @Injectable()
 export class PickupSlotsService {
-  getSlots(outletId: string, date: string): PickupSlotView[] {
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+
+  async getSlots(outletId: string, date: string): Promise<PickupSlotView[]> {
     this.assertValidDate(date);
 
-    const capacity = OUTLET_SLOT_CAPACITY[outletId];
-    if (!capacity) {
+    const outlet = await this.prisma.outlet.findUnique({
+      where: { outlet_id: outletId },
+      select: { slot_capacity: true },
+    });
+
+    if (!outlet) {
       throw new NotFoundException(`Outlet '${outletId}' was not found`);
     }
 
-    const blocks = [
-      ['11:30', '11:45'],
-      ['11:45', '12:00'],
-      ['12:00', '12:15'],
-      ['12:15', '12:30'],
-      ['12:30', '12:45'],
-      ['12:45', '13:00'],
-    ];
+    const capacity = outlet.slot_capacity;
 
-    // deterministic pseudo-bookings for stable API responses
-    const seed = this.hash(`${outletId}:${date}`);
+    // Count booked orders per slot for this outlet+date
+    const bookedCounts = await this.prisma.order.groupBy({
+      by: ['slot_id'],
+      where: {
+        outlet_id: outletId,
+        slot_date: new Date(date),
+      },
+      _count: { order_id: true },
+    });
 
-    return blocks.map(([startTime, endTime], index) => {
-      const booked = Math.min(capacity, (seed + index * 3) % (capacity + 1));
+    const bookedMap = new Map(
+      bookedCounts.map((b) => [b.slot_id, b._count.order_id]),
+    );
+
+    return TIME_BLOCKS.map(([startTime, endTime]) => {
+      const slotId = `${outletId}-${date}-${startTime}`;
+      const booked = bookedMap.get(slotId) || 0;
       const available = Math.max(0, capacity - booked);
 
       return {
-        slotId: `${outletId}-${date}-${startTime}`,
+        slotId,
         startTime,
         endTime,
         capacity,
@@ -66,13 +82,5 @@ export class PickupSlotsService {
     if (dayOnly < todayUtc) {
       throw new BadRequestException('Past dates are not allowed for pickup slots');
     }
-  }
-
-  private hash(input: string): number {
-    let value = 0;
-    for (let i = 0; i < input.length; i += 1) {
-      value = (value * 31 + input.charCodeAt(i)) % 100000;
-    }
-    return value;
   }
 }

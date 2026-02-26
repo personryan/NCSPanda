@@ -8,7 +8,7 @@ export class MenuController {
   ) {}
 
   @Get()
-  getOutletMenu(@Query('outletId') outletId?: string): OutletMenuView {
+  async getOutletMenu(@Query('outletId') outletId?: string): Promise<OutletMenuView> {
     if (!outletId || !outletId.trim()) {
       throw new BadRequestException('outletId query param is required');
     }

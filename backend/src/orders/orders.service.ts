@@ -1,4 +1,5 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 import { MenuService } from '../menu/menu.service';
 import { PickupSlotsService } from '../pickup-slots/pickup-slots.service';
 import { CreateOrderDto, CreateOrderItemDto } from './dto/create-order.dto';
@@ -21,68 +22,109 @@ export interface StoredOrder {
 
 @Injectable()
 export class OrdersService {
-  private readonly orders: StoredOrder[] = [];
-  private readonly slotUsage = new Map<string, number>();
-
   constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(MenuService) private readonly menuService: MenuService,
     @Inject(PickupSlotsService) private readonly pickupSlotsService: PickupSlotsService,
   ) {}
 
-  createOrder(payload: CreateOrderDto): StoredOrder {
+  async createOrder(payload: CreateOrderDto): Promise<StoredOrder> {
     if (!payload.items?.length) {
       throw new BadRequestException('Order must contain at least one item');
     }
 
-    const menu = this.menuService.getMenuByOutlet(payload.outletId);
-    const availableSlots = this.pickupSlotsService.getSlots(payload.outletId, payload.slotDate);
-    const selectedSlot = availableSlots.find((slot) => slot.slotId === payload.slotId);
+    // Validate menu items exist and are available
+    const menu = await this.menuService.getMenuByOutlet(payload.outletId);
+
+    // Validate pickup slot exists and has capacity
+    const availableSlots = await this.pickupSlotsService.getSlots(
+      payload.outletId,
+      payload.slotDate,
+    );
+    const selectedSlot = availableSlots.find((s) => s.slotId === payload.slotId);
 
     if (!selectedSlot) {
       throw new BadRequestException('Selected pickup slot does not exist for outlet/date');
     }
-
-    const slotKey = `${payload.outletId}:${payload.slotDate}:${payload.slotId}`;
-    const currentUsage = this.slotUsage.get(slotKey) || 0;
-    if (currentUsage >= selectedSlot.capacity) {
+    if (!selectedSlot.isAvailable) {
       throw new BadRequestException('Selected pickup slot is already full');
     }
 
     const normalizedItems = this.normalizeItems(payload.items, menu.items);
 
-    // atomic in-memory persistence block
-    const order: StoredOrder = {
-      orderId: `ord_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      outletId: payload.outletId,
-      customerId: payload.customerId || 'customer-anonymous',
-      slotDate: payload.slotDate,
-      slotId: payload.slotId,
-      status: 'received',
-      createdAt: new Date().toISOString(),
-      items: normalizedItems,
-    };
+    // Create order + order items in a single transaction
+    const order = await this.prisma.order.create({
+      data: {
+        outlet_id: payload.outletId,
+        customer_id: payload.customerId || 'customer-anonymous',
+        slot_date: new Date(payload.slotDate),
+        slot_id: payload.slotId,
+        status: 'received',
+        items: {
+          create: normalizedItems.map((item) => ({
+            item_id: item.itemId,
+            name: item.name,
+            quantity: item.quantity,
+            notes: item.notes ?? null,
+          })),
+        },
+      },
+      include: { items: true },
+    });
 
-    this.orders.push(order);
-    this.slotUsage.set(slotKey, currentUsage + 1);
-
-    return order;
+    return this.toStoredOrder(order);
   }
 
-  listOrdersForVendor(filters: {
+  async listOrdersForVendor(filters: {
     outletId: string;
     slotDate?: string;
     status?: 'received' | 'preparing' | 'ready';
-  }): StoredOrder[] {
-    return this.orders
-      .filter((order) => order.outletId === filters.outletId)
-      .filter((order) => (filters.slotDate ? order.slotDate === filters.slotDate : true))
-      .filter((order) => (filters.status ? order.status === filters.status : true))
-      .sort((a, b) => {
-        if (a.slotDate === b.slotDate) {
-          return b.createdAt.localeCompare(a.createdAt);
-        }
-        return a.slotDate.localeCompare(b.slotDate);
-      });
+  }): Promise<StoredOrder[]> {
+    const where: Record<string, unknown> = { outlet_id: filters.outletId };
+    if (filters.slotDate) where.slot_date = new Date(filters.slotDate);
+    if (filters.status) where.status = filters.status;
+
+    const orders = await this.prisma.order.findMany({
+      where,
+      include: { items: true },
+      orderBy: [{ slot_date: 'asc' }, { created_at: 'desc' }],
+    });
+
+    return orders.map((order) => this.toStoredOrder(order));
+  }
+
+  private toStoredOrder(
+    order: {
+      order_id: string;
+      outlet_id: string;
+      customer_id: string;
+      slot_date: Date;
+      slot_id: string;
+      status: string;
+      created_at: Date;
+      items: Array<{
+        item_id: string;
+        name: string;
+        quantity: number;
+        notes: string | null;
+      }>;
+    },
+  ): StoredOrder {
+    return {
+      orderId: order.order_id,
+      outletId: order.outlet_id,
+      customerId: order.customer_id,
+      slotDate: order.slot_date.toISOString().split('T')[0],
+      slotId: order.slot_id,
+      status: order.status as 'received',
+      createdAt: order.created_at.toISOString(),
+      items: order.items.map((i) => ({
+        itemId: i.item_id,
+        name: i.name,
+        quantity: i.quantity,
+        notes: i.notes ?? undefined,
+      })),
+    };
   }
 
   private normalizeItems(

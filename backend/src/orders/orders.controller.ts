@@ -14,7 +14,7 @@ export class OrdersController {
   constructor(@Inject(OrdersService) private readonly ordersService: OrdersService) {}
 
   @Post()
-  createOrder(@Body() payload: CreateOrderDto, @Headers('x-user-role') role?: string) {
+  async createOrder(@Body() payload: CreateOrderDto, @Headers('x-user-role') role?: string) {
     if (role !== 'customer') {
       throw new UnauthorizedException('Customer role is required');
     }

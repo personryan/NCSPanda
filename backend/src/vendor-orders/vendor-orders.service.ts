@@ -6,8 +6,8 @@ import { VendorOrdersQueryDto } from './dto/vendor-orders-query.dto';
 export class VendorOrdersService {
   constructor(@Inject(OrdersService) private readonly ordersService: OrdersService) {}
 
-  getIncomingOrders(query: VendorOrdersQueryDto) {
-    const orders = this.ordersService.listOrdersForVendor({
+  async getIncomingOrders(query: VendorOrdersQueryDto) {
+    const orders = await this.ordersService.listOrdersForVendor({
       outletId: query.vendorOutletId,
       slotDate: query.slotDate,
       status: query.status,
