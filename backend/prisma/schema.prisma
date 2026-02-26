@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
@@ -11,6 +12,18 @@ enum RoleName {
   customer
   vendor
   admin
+}
+
+enum AvailabilityStatus {
+  available
+  limited
+  sold_out
+}
+
+enum OrderStatus {
+  received
+  preparing
+  ready
 }
 
 model Role {
@@ -35,4 +48,63 @@ model User {
 
   @@index([role_id])
   @@map("users")
+}
+
+model Outlet {
+  outlet_id     String     @id @map("outlet_id")
+  outlet_name   String     @map("outlet_name") @db.VarChar(200)
+  slot_capacity Int        @map("slot_capacity")
+  created_at    DateTime   @default(now()) @map("created_at")
+  menu_items    MenuItem[]
+  orders        Order[]
+
+  @@map("outlets")
+}
+
+model MenuItem {
+  item_id             String             @id @map("item_id")
+  outlet_id           String             @map("outlet_id")
+  name                String             @db.VarChar(200)
+  description         String?
+  price               Decimal            @db.Decimal(10, 2)
+  currency            String             @default("SGD") @db.VarChar(3)
+  is_available        Boolean            @default(true) @map("is_available")
+  availability_status AvailabilityStatus @default(available) @map("availability_status")
+  created_at          DateTime           @default(now()) @map("created_at")
+  updated_at          DateTime           @updatedAt @map("updated_at")
+  outlet              Outlet             @relation(fields: [outlet_id], references: [outlet_id])
+  order_items         OrderItem[]
+
+  @@index([outlet_id])
+  @@map("menu_items")
+}
+
+model Order {
+  order_id    String      @id @default(dbgenerated("gen_random_uuid()")) @map("order_id") @db.Uuid
+  outlet_id   String      @map("outlet_id")
+  customer_id String      @map("customer_id")
+  slot_date   DateTime    @map("slot_date") @db.Date
+  slot_id     String      @map("slot_id")
+  status      OrderStatus @default(received)
+  created_at  DateTime    @default(now()) @map("created_at")
+  outlet      Outlet      @relation(fields: [outlet_id], references: [outlet_id])
+  items       OrderItem[]
+
+  @@index([outlet_id])
+  @@index([outlet_id, slot_date])
+  @@map("orders")
+}
+
+model OrderItem {
+  order_item_id Int      @id @default(autoincrement()) @map("order_item_id")
+  order_id      String   @map("order_id") @db.Uuid
+  item_id       String   @map("item_id")
+  name          String   @db.VarChar(200)
+  quantity      Int
+  notes         String?
+  order         Order    @relation(fields: [order_id], references: [order_id])
+  menu_item     MenuItem @relation(fields: [item_id], references: [item_id])
+
+  @@index([order_id])
+  @@map("order_items")
 }

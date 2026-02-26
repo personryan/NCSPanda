@@ -1,4 +1,4 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import { Inject, Injectable, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProfileDto } from './dto/create-profile.dto';
 
@@ -6,7 +6,7 @@ const DEFAULT_ROLE_ID = 1; // customer
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async createProfile(userId: string, dto: CreateProfileDto) {
     const existing = await this.prisma.user.findUnique({ where: { user_id: userId } });
@@ -36,8 +36,10 @@ export class UsersService {
       first_name: user.first_name,
       last_name: user.last_name,
       is_active: user.is_active,
-      role: user.role.role_name,
-      role_id: user.role_id,
+      role: user.role?.role_name ?? null,
+      role_id: user.role_id ?? null,
     };
   }
 }
+
+

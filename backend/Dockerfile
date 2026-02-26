@@ -2,7 +2,7 @@
 
 ARG USE_CORP_CERT=false
 
-FROM node:20-alpine AS base
+FROM node:20 AS base
 WORKDIR /app
 ENV NODE_ENV=development
 

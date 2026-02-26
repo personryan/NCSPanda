@@ -6,6 +6,10 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.setGlobalPrefix('api');
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+    app.enableCors({
+    origin: 'http://localhost:5173',
+    credentials: true, // only if you need cookies/auth headers
+  });
   await app.listen(3000);
 }
 bootstrap();
