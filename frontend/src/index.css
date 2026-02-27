@@ -94,6 +94,19 @@ a:hover {
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
+  width: 100%;
+}
+
+.app-main__inner {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.app-main-page .app-main__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
 }
 
 /* Loading */
@@ -261,13 +274,67 @@ a:hover {
   flex-wrap: wrap;
 }
 
+/* Dashboard tab bar — full width of content area, fixed layout so active tab doesn’t change size */
+.dashboard-nav {
+  width: 100%;
+  margin-bottom: 1.25rem;
+  flex-shrink: 0;
+  display: flex;
+  gap: 0;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 0.25rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboard-nav__btn {
+  flex: 1;
+  min-width: 0;
+  padding: 0.625rem 1rem;
+  font-family: var(--font-heading);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  background: transparent;
+  border: none;
+  border-radius: calc(var(--radius-lg) - 2px);
+  cursor: pointer;
+  transition: color 0.2s ease, background-color 0.2s ease;
+  white-space: nowrap;
+}
+
+.dashboard-nav__btn:hover:not(:disabled) {
+  color: var(--color-text);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.dashboard-nav__btn--active {
+  color: white;
+  background: var(--color-accent);
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboard-nav__btn--active:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+}
+
+.dashboard-nav__btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .app-main-page {
-  align-items: flex-start;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+.app-main-page .app-main__inner {
+  flex: 0 1 auto;
 }
 
 .menu-page {
   width: 100%;
-  max-width: 960px;
 }
 
 .menu-page-header p {
@@ -357,7 +424,7 @@ a:hover {
 
 .order-page {
   width: 100%;
-  max-width: 1080px;
+  min-width: 0;
 }
 
 .order-grid {

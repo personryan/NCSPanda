@@ -126,43 +126,47 @@ function App() {
         </div>
       </header>
       <main className="app-main app-main-page">
-        <div className="menu-page" style={{ marginBottom: '0.5rem' }}>
-          <div className="dashboard-actions" style={{ justifyContent: 'flex-start' }}>
+        <div className="app-main__inner">
+          <nav className="dashboard-nav" aria-label="App sections">
             <button
               type="button"
-              className={`btn ${activePage === 'menu' ? 'btn-primary' : 'btn-ghost'}`}
+              className={`dashboard-nav__btn ${activePage === 'menu' ? 'dashboard-nav__btn--active' : ''}`}
               onClick={() => setActivePage('menu')}
               disabled={!canUseCustomer}
+              aria-current={activePage === 'menu' ? 'page' : undefined}
             >
               Browse Menu
             </button>
             <button
               type="button"
-              className={`btn ${activePage === 'order' ? 'btn-primary' : 'btn-ghost'}`}
+              className={`dashboard-nav__btn ${activePage === 'order' ? 'dashboard-nav__btn--active' : ''}`}
               onClick={() => setActivePage('order')}
               disabled={!canUseCustomer}
+              aria-current={activePage === 'order' ? 'page' : undefined}
             >
               Place Order
             </button>
-            <button
-              type="button"
-              className={`btn ${activePage === 'vendor' ? 'btn-primary' : 'btn-ghost'}`}
-              onClick={() => setActivePage('vendor')}
-              disabled={!canUseVendor}
-            >
-              Vendor Dashboard
-            </button>
-          </div>
+            {canUseVendor && (
+              <button
+                type="button"
+                className={`dashboard-nav__btn ${activePage === 'vendor' ? 'dashboard-nav__btn--active' : ''}`}
+                onClick={() => setActivePage('vendor')}
+                aria-current={activePage === 'vendor' ? 'page' : undefined}
+              >
+                Vendor Dashboard
+              </button>
+            )}
+          </nav>
+          {activePage === 'menu' && canUseCustomer ? <MenuPage /> : null}
+          {activePage === 'order' && canUseCustomer ? <OrdersPage /> : null}
+          {activePage === 'vendor' && canUseVendor ? <VendorDashboardPage /> : null}
+          {(activePage === 'vendor' && !canUseVendor) ||
+          ((activePage === 'menu' || activePage === 'order') && !canUseCustomer) ? (
+            <div className="menu-surface">
+              <p className="alert-error">You do not have permission to access this module with your current role.</p>
+            </div>
+          ) : null}
         </div>
-        {activePage === 'menu' && canUseCustomer ? <MenuPage /> : null}
-        {activePage === 'order' && canUseCustomer ? <OrdersPage /> : null}
-        {activePage === 'vendor' && canUseVendor ? <VendorDashboardPage /> : null}
-        {(activePage === 'vendor' && !canUseVendor) ||
-        ((activePage === 'menu' || activePage === 'order') && !canUseCustomer) ? (
-          <div className="menu-surface">
-            <p className="alert-error">You do not have permission to access this module with your current role.</p>
-          </div>
-        ) : null}
       </main>
     </div>
   );
