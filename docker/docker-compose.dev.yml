@@ -1,4 +1,4 @@
-version: "3.9"
+#version: "3.9"
 
 services:
   db:
@@ -26,7 +26,7 @@ services:
       - ../backend/prisma:/app/prisma
       - ../backend/tsconfig.json:/app/tsconfig.json
     env_file:
-      - ../backend/.env
+      - ../backend/.env.example
     environment:
       NODE_ENV: development
     ports:
@@ -48,7 +48,7 @@ services:
     ports:
       - "5173:5173"
     env_file:
-      - ../frontend/.env
+      - ../frontend/.env.example
     depends_on:
       - backend
 
