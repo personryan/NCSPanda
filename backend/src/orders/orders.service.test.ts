@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import { OrdersService } from './orders.service';
 import { MenuService, OutletMenuView } from '../menu/menu.service';
@@ -49,38 +49,36 @@ const FULL_SLOTS_RESPONSE: PickupSlotView[] = [
   },
 ];
 
-function buildService(
-  menuResponse: OutletMenuView,
-  slotsResponse: PickupSlotView[],
-  createdOrder?: any,
-) {
+const BASE_ORDER = {
+  order_id: 'ord_test_123',
+  outlet_id: 'outlet-b6-chicken-rice',
+  customer_id: 'customer-123',
+  slot_date: new Date('2099-01-01'),
+  slot_id: 'outlet-b6-chicken-rice-2099-01-01-11:30',
+  status: 'received',
+  created_at: new Date(),
+  items: [{ item_id: 'item-cr-01', name: 'Roasted Chicken Rice', quantity: 1, notes: null }],
+};
+
+function buildService(menuResponse: OutletMenuView, slotsResponse: PickupSlotView[]) {
   const mockPrisma = {
     order: {
-      create: async () =>
-        createdOrder ?? {
-          order_id: 'ord_test_123',
-          outlet_id: 'outlet-b6-chicken-rice',
-          customer_id: 'customer-123',
-          slot_date: new Date('2099-01-01'),
-          slot_id: 'outlet-b6-chicken-rice-2099-01-01-11:30',
-          status: 'received',
-          created_at: new Date(),
-          items: [
-            { item_id: 'item-cr-01', name: 'Roasted Chicken Rice', quantity: 1, notes: null },
-          ],
-        },
+      create: vi.fn().mockResolvedValue(BASE_ORDER),
+      findUnique: vi.fn().mockResolvedValue(BASE_ORDER),
+      update: vi.fn().mockResolvedValue({ ...BASE_ORDER, status: 'preparing' }),
+      findMany: vi.fn().mockResolvedValue([BASE_ORDER]),
     },
   } as any;
 
   const mockMenu = { getMenuByOutlet: vi.fn().mockResolvedValue(menuResponse) } as unknown as MenuService;
   const mockSlots = { getSlots: vi.fn().mockResolvedValue(slotsResponse) } as unknown as PickupSlotsService;
 
-  return new OrdersService(mockPrisma, mockMenu, mockSlots);
+  return { service: new OrdersService(mockPrisma, mockMenu, mockSlots), mockPrisma };
 }
 
 describe('OrdersService', () => {
   it('creates pre-order without payment for valid payload', async () => {
-    const service = buildService(MENU_RESPONSE, SLOTS_RESPONSE);
+    const { service } = buildService(MENU_RESPONSE, SLOTS_RESPONSE);
 
     const order = await service.createOrder({
       outletId: 'outlet-b6-chicken-rice',
@@ -96,7 +94,7 @@ describe('OrdersService', () => {
   });
 
   it('blocks over-capacity bookings for same slot', async () => {
-    const service = buildService(MENU_RESPONSE, FULL_SLOTS_RESPONSE);
+    const { service } = buildService(MENU_RESPONSE, FULL_SLOTS_RESPONSE);
 
     await expect(
       service.createOrder({
@@ -109,7 +107,7 @@ describe('OrdersService', () => {
   });
 
   it('rejects unavailable items', async () => {
-    const service = buildService(MENU_RESPONSE, SLOTS_RESPONSE);
+    const { service } = buildService(MENU_RESPONSE, SLOTS_RESPONSE);
 
     await expect(
       service.createOrder({
@@ -119,5 +117,30 @@ describe('OrdersService', () => {
         items: [{ itemId: 'item-cr-03', quantity: 1 }],
       }),
     ).rejects.toThrow(BadRequestException);
+  });
+
+  it('returns order tracking details', async () => {
+    const { service } = buildService(MENU_RESPONSE, SLOTS_RESPONSE);
+    const order = await service.getOrderById('ord_test_123');
+    expect(order.orderId).toBe('ord_test_123');
+  });
+
+  it('updates order status for valid transition', async () => {
+    const { service } = buildService(MENU_RESPONSE, SLOTS_RESPONSE);
+    const order = await service.updateOrderStatus('ord_test_123', 'preparing');
+    expect(order.status).toBe('preparing');
+  });
+
+  it('rejects invalid status transitions', async () => {
+    const { service } = buildService(MENU_RESPONSE, SLOTS_RESPONSE);
+    await expect(service.updateOrderStatus('ord_test_123', 'ready')).rejects.toThrow(
+      BadRequestException,
+    );
+  });
+
+  it('throws not found for missing order', async () => {
+    const { service, mockPrisma } = buildService(MENU_RESPONSE, SLOTS_RESPONSE);
+    mockPrisma.order.findUnique.mockResolvedValueOnce(null);
+    await expect(service.getOrderById('missing')).rejects.toThrow(NotFoundException);
   });
 });

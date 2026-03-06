@@ -34,17 +34,41 @@ export interface CreateOrderPayload {
   customerId?: string;
 }
 
+export type OrderStatus = 'received' | 'preparing' | 'ready';
+
 export interface VendorIncomingOrder {
   orderId: string;
   customerId: string;
   outletId: string;
   slotDate: string;
   slotId: string;
-  status: string;
+  status: OrderStatus;
   createdAt: string;
   itemsSummary: string;
 }
 
+export interface TrackedOrder extends VendorIncomingOrder {
+  items: Array<{ itemId: string; name: string; quantity: number; notes?: string }>;
+}
+
+
+export interface VendorSummaryReport {
+  outletId: string;
+  period: {
+    fromDate: string | null;
+    toDate: string | null;
+  };
+  totals: {
+    orders: number;
+    items: number;
+  };
+  statusBreakdown: {
+    received: number;
+    preparing: number;
+    ready: number;
+  };
+  topItems: Array<{ itemId: string; name: string; quantity: number }>;
+}
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000').replace(/\/$/, '');
 
 export async function fetchMenuByOutlet(outletId: string): Promise<OutletMenu> {
@@ -89,16 +113,19 @@ export async function createOrder(payload: CreateOrderPayload) {
   return response.json() as Promise<{ orderId: string; status: string }>;
 }
 
-export async function fetchVendorIncomingOrders(outletId: string): Promise<VendorIncomingOrder[]> {
-  const response = await fetch(
-    `${API_BASE}/api/vendor/orders?vendorOutletId=${encodeURIComponent(outletId)}`,
-    {
-      headers: {
-        'x-user-role': 'vendor',
-        'x-vendor-outlet-id': outletId,
-      },
+export async function fetchVendorIncomingOrders(
+  outletId: string,
+  status?: OrderStatus | 'all',
+): Promise<VendorIncomingOrder[]> {
+  const params = new URLSearchParams({ vendorOutletId: outletId });
+  if (status && status !== 'all') params.set('status', status);
+
+  const response = await fetch(`${API_BASE}/api/vendor/orders?${params.toString()}`, {
+    headers: {
+      'x-user-role': 'vendor',
+      'x-vendor-outlet-id': outletId,
     },
-  );
+  });
 
   if (!response.ok) {
     const text = await response.text();
@@ -106,6 +133,52 @@ export async function fetchVendorIncomingOrders(outletId: string): Promise<Vendo
   }
 
   return response.json() as Promise<VendorIncomingOrder[]>;
+}
+
+export async function updateVendorOrderStatus(
+  orderId: string,
+  status: Exclude<OrderStatus, 'received'>,
+): Promise<TrackedOrder> {
+  const response = await fetch(`${API_BASE}/api/orders/${encodeURIComponent(orderId)}/status`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-user-role': 'vendor',
+    },
+    body: JSON.stringify({ status }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Failed to update order status (${response.status})`);
+  }
+
+  return response.json() as Promise<TrackedOrder>;
+}
+
+
+
+export async function fetchVendorSummaryReport(
+  outletId: string,
+  fromDate?: string,
+  toDate?: string,
+): Promise<VendorSummaryReport> {
+  const params = new URLSearchParams({ outletId });
+  if (fromDate) params.set('fromDate', fromDate);
+  if (toDate) params.set('toDate', toDate);
+
+  const response = await fetch(`${API_BASE}/api/reports/vendor-summary?${params.toString()}`, {
+    headers: {
+      'x-user-role': 'vendor',
+    },
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Failed to fetch vendor summary (${response.status})`);
+  }
+
+  return response.json() as Promise<VendorSummaryReport>;
 }
 export async function fetchCurrentUserProfile(accessToken: string) {
   const response = await fetch(`${API_BASE}/api/users/me`, {
