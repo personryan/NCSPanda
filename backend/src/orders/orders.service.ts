@@ -1,8 +1,15 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { MenuService } from '../menu/menu.service';
 import { PickupSlotsService } from '../pickup-slots/pickup-slots.service';
 import { CreateOrderDto, CreateOrderItemDto } from './dto/create-order.dto';
+
+export type OrderStatus = 'received' | 'preparing' | 'ready';
 
 export interface StoredOrder {
   orderId: string;
@@ -10,7 +17,7 @@ export interface StoredOrder {
   customerId: string;
   slotDate: string;
   slotId: string;
-  status: 'received';
+  status: OrderStatus;
   createdAt: string;
   items: Array<{
     itemId: string;
@@ -78,7 +85,7 @@ export class OrdersService {
   async listOrdersForVendor(filters: {
     outletId: string;
     slotDate?: string;
-    status?: 'received' | 'preparing' | 'ready';
+    status?: OrderStatus;
   }): Promise<StoredOrder[]> {
     const where: Record<string, unknown> = { outlet_id: filters.outletId };
     if (filters.slotDate) where.slot_date = new Date(filters.slotDate);
@@ -91,6 +98,56 @@ export class OrdersService {
     });
 
     return orders.map((order) => this.toStoredOrder(order));
+  }
+
+  async getOrderById(orderId: string): Promise<StoredOrder> {
+    const order = await this.prisma.order.findUnique({
+      where: { order_id: orderId },
+      include: { items: true },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    return this.toStoredOrder(order);
+  }
+
+  async updateOrderStatus(orderId: string, status: OrderStatus): Promise<StoredOrder> {
+    const existing = await this.prisma.order.findUnique({
+      where: { order_id: orderId },
+      include: { items: true },
+    });
+
+    if (!existing) {
+      throw new NotFoundException('Order not found');
+    }
+
+    if (!this.canTransition(existing.status as OrderStatus, status)) {
+      throw new BadRequestException(
+        `Invalid status transition from '${existing.status}' to '${status}'`,
+      );
+    }
+
+    const updated = await this.prisma.order.update({
+      where: { order_id: orderId },
+      data: { status },
+      include: { items: true },
+    });
+
+    return this.toStoredOrder(updated);
+  }
+
+  private canTransition(from: OrderStatus, to: OrderStatus): boolean {
+    if (from === to) return true;
+
+    const validTransitions: Record<OrderStatus, OrderStatus[]> = {
+      received: ['preparing'],
+      preparing: ['ready'],
+      ready: [],
+    };
+
+    return validTransitions[from]?.includes(to) ?? false;
   }
 
   private toStoredOrder(
@@ -116,7 +173,7 @@ export class OrdersService {
       customerId: order.customer_id,
       slotDate: order.slot_date.toISOString().split('T')[0],
       slotId: order.slot_id,
-      status: order.status as 'received',
+      status: order.status as OrderStatus,
       createdAt: order.created_at.toISOString(),
       items: order.items.map((i) => ({
         itemId: i.item_id,

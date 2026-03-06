@@ -16,6 +16,8 @@ const mockOrder = {
 
 const mockOrdersService = {
   createOrder: vi.fn().mockResolvedValue(mockOrder),
+  getOrderById: vi.fn().mockResolvedValue(mockOrder),
+  updateOrderStatus: vi.fn().mockResolvedValue({ ...mockOrder, status: 'preparing' as const }),
 } as unknown as OrdersService;
 
 const payload = {
@@ -35,5 +37,25 @@ describe('OrdersController', () => {
   it('allows customer role to create order', async () => {
     const result = await controller.createOrder(payload, 'customer');
     expect(result.orderId).toBe('ord_test_123');
+  });
+
+  it('returns tracking details for customer role', async () => {
+    const result = await controller.getOrderTracking('ord_test_123', 'customer');
+    expect(result.orderId).toBe('ord_test_123');
+  });
+
+  it('blocks status update for non-vendor role', async () => {
+    await expect(
+      controller.updateOrderStatus('ord_test_123', { status: 'preparing' }, 'customer'),
+    ).rejects.toThrow(UnauthorizedException);
+  });
+
+  it('allows status update for vendor role', async () => {
+    const result = await controller.updateOrderStatus(
+      'ord_test_123',
+      { status: 'preparing' },
+      'vendor',
+    );
+    expect(result.status).toBe('preparing');
   });
 });
