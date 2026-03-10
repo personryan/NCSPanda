@@ -26,7 +26,7 @@ services:
       - ../backend/prisma:/app/prisma
       - ../backend/tsconfig.json:/app/tsconfig.json
     env_file:
-      - ../backend/.env.example
+      - ../backend/.env
     environment:
       NODE_ENV: development
     ports:
@@ -48,7 +48,7 @@ services:
     ports:
       - "5173:5173"
     env_file:
-      - ../frontend/.env.example
+      - ../frontend/.env
     depends_on:
       - backend
 

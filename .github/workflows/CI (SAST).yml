@@ -1,0 +1,66 @@
+# CK to implement CodeQL and SonarQube as part of sprint 2
+# name: CI (SAST)
+
+# on:
+#   pull_request:
+#     branches: [staging]
+#   push:
+#     branches-ignore: [staging]
+
+# permissions:
+#   contents: read
+#   security-events: write
+
+# jobs:
+#   node-security:
+#     name: Lint + npm audit (${{ matrix.dir }})
+#     runs-on: ubuntu-latest
+#     strategy:
+#       matrix:
+#         dir: [backend, frontend]
+#     steps:
+#       - uses: actions/checkout@v4
+
+#       - name: Setup Node
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: "20"
+#           cache: npm
+#           cache-dependency-path: ${{ matrix.dir }}/package-lock.json
+
+#       - name: Install deps
+#         working-directory: ${{ matrix.dir }}
+#         run: npm ci
+
+#       - name: ESLint (if present)
+#         working-directory: ${{ matrix.dir }}
+#         run: npm run lint --if-present
+
+#       - name: npm audit (high+)
+#         working-directory: ${{ matrix.dir }}
+#         run: npm audit --audit-level=high
+
+#   codeql:
+#     name: CodeQL (JS/TS)
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v4
+
+#       - name: Initialize CodeQL
+#         uses: github/codeql-action/init@v3
+#         with:
+#           languages: javascript-typescript
+
+#       - name: Analyze
+#         uses: github/codeql-action/analyze@v3
+
+  # Optional SonarQube/SonarCloud (enable when ready)
+  # sonar:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Sonar scan
+  #       uses: SonarSource/sonarqube-scan-action@v7
+  #       env:
+  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  #         # SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}  # self-hosted only

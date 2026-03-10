@@ -40,3 +40,11 @@
 4. **Not yet automated:** actual staging deployment execution (currently stubbed).
 
 
+# DO APP PLATFORM GITHUB ACTIONS DOCUMENTATION
+https://github.com/digitalocean/app_action
+
+## DO APP PLATFORM ENV VARIABLE DOCUMENTATION
+https://docs.digitalocean.com/products/app-platform/how-to/use-environment-variables/
+
+## GHCR DOCUMENTATION
+https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
