@@ -514,3 +514,59 @@ a:hover {
     grid-template-columns: 1.5fr 1fr;
   }
 }
+
+.vendor-toolbar-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.vendor-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.vendor-card {
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.75rem;
+}
+
+.vendor-card h3 {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.vendor-card strong {
+  font-size: 1.4rem;
+}
+
+.status-order-received {
+  background: #fff7e6;
+  color: #92400e;
+}
+
+.status-order-preparing {
+  background: #e0f2fe;
+  color: #075985;
+}
+
+.status-order-ready {
+  background: #e8f6ee;
+  color: #166534;
+}
+
+.btn-inline {
+  width: auto;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--color-border);
+}
+
+.status-done {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}

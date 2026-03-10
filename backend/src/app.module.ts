@@ -7,6 +7,7 @@ import { MenuModule } from './menu/menu.module';
 import { PickupSlotsModule } from './pickup-slots/pickup-slots.module';
 import { OrdersModule } from './orders/orders.module';
 import { VendorOrdersModule } from './vendor-orders/vendor-orders.module';
+import { ReportingModule } from './reporting/reporting.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { VendorOrdersModule } from './vendor-orders/vendor-orders.module';
     PickupSlotsModule,
     OrdersModule,
     VendorOrdersModule,
+    ReportingModule,
   ],
   controllers: [HealthController],
 })

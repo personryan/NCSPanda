@@ -6,13 +6,14 @@ import RegisterForm from './components/RegisterForm';
 import MenuPage from './pages/Menu';
 import OrdersPage from './pages/Orders';
 import VendorDashboardPage from './pages/VendorDashboard';
+import ReportingAnalyticsPage from './pages/ReportingAnalytics';
 import { fetchCurrentUserProfile } from './services/api';
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [showRegister, setShowRegister] = useState(false);
-  const [activePage, setActivePage] = useState<'menu' | 'order' | 'vendor'>('menu');
+  const [activePage, setActivePage] = useState<'menu' | 'order' | 'vendor' | 'reporting'>('menu');
   const [profileRoleId, setProfileRoleId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -57,12 +58,12 @@ function App() {
   useEffect(() => {
     if (!session) return;
 
-    if (canUseVendor && activePage !== 'vendor') {
+    if (canUseVendor && activePage !== 'vendor' && activePage !== 'reporting') {
       setActivePage('vendor');
       return;
     }
 
-    if (!canUseVendor && activePage === 'vendor') {
+    if (!canUseVendor && (activePage === 'vendor' || activePage === 'reporting')) {
       setActivePage('menu');
     }
   }, [session, canUseVendor, activePage]);
@@ -156,11 +157,22 @@ function App() {
                 Vendor Dashboard
               </button>
             )}
+            {canUseVendor && (
+              <button
+                type="button"
+                className={`dashboard-nav__btn ${activePage === 'reporting' ? 'dashboard-nav__btn--active' : ''}`}
+                onClick={() => setActivePage('reporting')}
+                aria-current={activePage === 'reporting' ? 'page' : undefined}
+              >
+                Reporting
+              </button>
+            )}
           </nav>
           {activePage === 'menu' && canUseCustomer ? <MenuPage /> : null}
           {activePage === 'order' && canUseCustomer ? <OrdersPage /> : null}
           {activePage === 'vendor' && canUseVendor ? <VendorDashboardPage /> : null}
-          {(activePage === 'vendor' && !canUseVendor) ||
+          {activePage === 'reporting' && canUseVendor ? <ReportingAnalyticsPage /> : null}
+          {((activePage === 'vendor' || activePage === 'reporting') && !canUseVendor) ||
           ((activePage === 'menu' || activePage === 'order') && !canUseCustomer) ? (
             <div className="menu-surface">
               <p className="alert-error">You do not have permission to access this module with your current role.</p>
