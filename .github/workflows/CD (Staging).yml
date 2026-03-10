@@ -15,8 +15,8 @@ permissions:
 env:
   REGISTRY: ghcr.io
   GHCR_OWNER: tck1998
-  BACKEND_IMAGE_REPO: ${{ github.event.repository.name }}-backend
-  FRONTEND_IMAGE_REPO: ${{ github.event.repository.name }}-frontend
+  BACKEND_IMAGE_REPO: ncspanda-backend
+  FRONTEND_IMAGE_REPO: ncspanda-frontend
 
   # Repo variable (Settings -> Secrets and variables -> Actions -> Variables)
   STAGING_URL: ${{ vars.STAGING_URL }}
