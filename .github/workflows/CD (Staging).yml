@@ -20,6 +20,7 @@ env:
 
   # Repo variable (Settings -> Secrets and variables -> Actions -> Variables)
   STAGING_URL: ${{ vars.STAGING_URL }}
+  DO_APP_NAME_STAGING: ${{ vars.DO_APP_NAME_STAGING }}
 
 jobs:
   deploy:
