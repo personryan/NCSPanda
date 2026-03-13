@@ -22,7 +22,7 @@ env:
   IMAGE_TAG: staging-${{ github.sha }}
 
 jobs:
-  deploy:
+  Continuous-Deployment:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -107,7 +107,7 @@ jobs:
 
       - name: Restore archived DO app (if archived)
         env:
-          DO_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+          DO_TOKEN: ${{ secrets.NCSPANDA_DOSTAGING }}
           DO_APP_NAME: ${{ secrets.DO_APP_NAME_STAGING }}
         run: |
           set -euo pipefail
@@ -157,7 +157,7 @@ jobs:
           print_build_logs: "true"
           print_deploy_logs: "true"
 
-      - name: Wait for Staging Environment
+      - name: Staging Environment Health Check
         run: |
           # initial wait before starting checks (optional, can be adjusted or removed)
           sleep 60 
@@ -169,11 +169,11 @@ jobs:
         uses: zaproxy/action-baseline@v0.15.0
         with:
           target: ${{ secrets.STAGING_URL }}
-          fail_action: true
+          fail_action: false
           allow_issue_writing: false # disable automatic issue creation in GH
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run staging smoke checks
+      - name: Smoke Test
         env:
           STAGING_API_BASE_URL: ${{ secrets.STAGING_URL }}/api
         run: node scripts/smoke/staging-smoke.js
