@@ -17,10 +17,9 @@ env:
   GHCR_OWNER: ${{ github.repository_owner }}
   BACKEND_IMAGE_REPO: ncspanda-backend
   FRONTEND_IMAGE_REPO: ncspanda-frontend
-
-  # Repo variable (Settings -> Secrets and variables -> Actions -> Variables)
   STAGING_URL: ${{ secrets.STAGING_URL }}
   DO_APP_NAME_STAGING: ${{ secrets.DO_APP_NAME_STAGING }}
+  IMAGE_TAG: staging-${{ github.sha }}
 
 jobs:
   deploy:
@@ -106,22 +105,21 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # - name: Deploy to DigitalOcean App Platform
-      #   uses: digitalocean/app_action/deploy@v2
-      #   env:
-      #     BACKEND_DIGEST: ${{ steps.push_backend.outputs.digest }} -- change to correct variable name if needed
-      #     FRONTEND_DIGEST: ${{ steps.push_frontend.outputs.digest }} -- change to correct variable name if needed
-      #   with:
-      #     token: ${{ secrets.NCSPANDA_DOSTAGING }}
-      #     project_id: ${{ secrets.DO_PROJECT_ID_STAGING }} -- change to app name
-      #     app_spec_location: .do/app.yaml
-      #     print_build_logs: "true"
-      #     print_deploy_logs: "true"
+      - name: Deploy to DigitalOcean App Platform
+        uses: digitalocean/app_action/deploy@v2
+        env:
+          IMAGE_TAG_PERSONRYAN-NCSPANDA-BACKEND: ${{ env.IMAGE_TAG }}
+          IMAGE_TAG_PERSONRYAN-NCSPANDA-FRONTEND: ${{ env.IMAGE_TAG }}
+        with:
+          token: ${{ secrets.NCSPANDA_DOSTAGING }}
+          app_name: ${{ env.DO_APP_NAME_STAGING }}
+          print_build_logs: "true"
+          print_deploy_logs: "true"
 
       - name: Wait for Staging Environment
         run: |
           # initial wait before starting checks (optional, can be adjusted or removed)
-          sleep 30 
+          sleep 60 
           # This loop pings the URL every 5 seconds, timing out after 5 minutes (300s)
           timeout 300s bash -c 'until curl -sIL ${{ secrets.STAGING_URL }} | grep "200"; do echo "Still waiting..."; sleep 5; done'
         shell: bash
@@ -130,7 +128,7 @@ jobs:
         uses: zaproxy/action-baseline@v0.15.0
         with:
           target: ${{ secrets.STAGING_URL }}
-          fail_action: false # temporary to test workflow
+          fail_action: true
           allow_issue_writing: false # disable automatic issue creation in GH
           token: ${{ secrets.GITHUB_TOKEN }}
 
