@@ -1,4 +1,4 @@
-name: CI
+name: Static Analysis ( ESLint, Typecheck ) 
 
 on:
   push:

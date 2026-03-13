@@ -1,4 +1,4 @@
-name: Deploy Staging (GHCR -> DO App Platform)
+name: Image Build, Scan, and Deploy to Staging >> DAST >> Smoke Tests
 
 on:
   push:
