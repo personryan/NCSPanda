@@ -6,7 +6,7 @@
     "dev": "vite",
     "build": "vite build",
     "typecheck": "tsc --noEmit",
-    "lint": "ts-standard --project tsconfig.json",
+    "lint": "ts-standard --project tsconfig.eslint.json",
     "preview": "vite preview",
     "test": "vitest run"
   },
