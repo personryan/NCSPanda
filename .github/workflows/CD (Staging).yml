@@ -120,7 +120,8 @@ jobs:
 
       - name: Wait for Staging Environment
         run: |
-          sleep 30 # initial wait before starting checks (optional, can be adjusted or removed)
+          # initial wait before starting checks (optional, can be adjusted or removed)
+          sleep 30 
           # This loop pings the URL every 5 seconds, timing out after 5 minutes (300s)
           timeout 300s bash -c 'until curl -sIL ${{ secrets.STAGING_URL }} | grep "200"; do echo "Still waiting..."; sleep 5; done'
         shell: bash
@@ -130,6 +131,7 @@ jobs:
         with:
           target: ${{ secrets.STAGING_URL }}
           fail_action: false # temporary to test workflow
+          allow_issue_writing: false # disable automatic issue creation in GH
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run staging smoke checks
