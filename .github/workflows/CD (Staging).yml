@@ -19,8 +19,8 @@ env:
   FRONTEND_IMAGE_REPO: ncspanda-frontend
 
   # Repo variable (Settings -> Secrets and variables -> Actions -> Variables)
-  STAGING_URL: ${{ vars.STAGING_URL }}
-  DO_APP_NAME_STAGING: ${{ vars.DO_APP_NAME_STAGING }}
+  STAGING_URL: ${{ secrets.STAGING_URL }}
+  DO_APP_NAME_STAGING: ${{ secrets.DO_APP_NAME_STAGING }}
 
 jobs:
   deploy:
@@ -109,18 +109,37 @@ jobs:
       # - name: Deploy to DigitalOcean App Platform
       #   uses: digitalocean/app_action/deploy@v2
       #   env:
-      #     BACKEND_DIGEST: ${{ steps.push_backend.outputs.digest }}
-      #     FRONTEND_DIGEST: ${{ steps.push_frontend.outputs.digest }}
+      #     BACKEND_DIGEST: ${{ steps.push_backend.outputs.digest }} -- change to correct variable name if needed
+      #     FRONTEND_DIGEST: ${{ steps.push_frontend.outputs.digest }} -- change to correct variable name if needed
       #   with:
       #     token: ${{ secrets.NCSPANDA_DOSTAGING }}
-      #     project_id: ${{ secrets.DO_PROJECT_ID_STAGING }}
+      #     project_id: ${{ secrets.DO_PROJECT_ID_STAGING }} -- change to app name
       #     app_spec_location: .do/app.yaml
       #     print_build_logs: "true"
       #     print_deploy_logs: "true"
 
-      # - name: OWASP ZAP Baseline (DAST)
-      #   uses: zaproxy/action-baseline@v0.15.0
-      #   with:
-      #     target: ${{ env.STAGING_URL }}
-      #     fail_action: true
-      #     token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Wait for Staging Environment
+        run: |
+          sleep 30 # initial wait before starting checks (optional, can be adjusted or removed)
+          # This loop pings the URL every 5 seconds, timing out after 5 minutes (300s)
+          timeout 300s bash -c 'until curl -sIL ${{ secrets.STAGING_URL }} | grep "200"; do echo "Still waiting..."; sleep 5; done'
+        shell: bash
+
+      - name: OWASP ZAP Baseline (DAST)
+        uses: zaproxy/action-baseline@v0.15.0
+        with:
+          target: ${{ secrets.STAGING_URL }}
+          fail_action: false # temporary to test workflow
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run staging smoke checks
+        env:
+          STAGING_API_BASE_URL: ${{ secrets.STAGING_URL }}/api
+        run: node scripts/smoke/staging-smoke.js
+
+      - name: Upload smoke artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-smoke-log
+          path: scripts/smoke/staging-smoke.js
