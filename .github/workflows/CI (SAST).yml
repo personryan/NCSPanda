@@ -5,6 +5,9 @@ on:
     branches:
       - staging
       - main
+  push:
+    branches:
+      - feature/**
 
 permissions:
   contents: read
@@ -31,11 +34,25 @@ jobs:
   sonarqube:
     name: SonarQube
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-      - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602 # v6.0.0
+          fetch-depth: 0
+
+      # 🔹 DEV / PR scan (no fail)
+      - name: Sonar Scan (Dev / PR)
+        if: github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/feature/')
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      # 🔹 MAIN branch (enforce quality gate)
+      - name: Sonar Scan (Main - enforce)
+        if: github.ref == 'refs/heads/main'
+        uses: SonarSource/sonarqube-scan-action@v6
+        with:
+          args: >
+            -Dsonar.qualitygate.wait=true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
