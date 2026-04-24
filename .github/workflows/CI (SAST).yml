@@ -2,8 +2,9 @@ name: SAST (CodeQL + SonarQube)
 
 on:
   pull_request:
-  push:
-    branches: [staging]
+    branches:
+      - staging
+      - main
 
 permissions:
   contents: read
