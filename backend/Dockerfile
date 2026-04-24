@@ -1,16 +1,15 @@
 # Dockerfile (backend)
 
-ARG USE_CORP_CERT=false
-
-FROM node:20 AS base
+FROM node:20-alpine AS base
 WORKDIR /app
 
-COPY backend/package*.json ./
+RUN apk add --no-cache openssl
 
-RUN npm install
+COPY backend/package*.json ./
+RUN npm ci
 
 COPY backend/prisma ./prisma
-RUN NODE_TLS_REJECT_UNAUTHORIZED=0 npx prisma generate
+RUN npx prisma generate
 COPY backend/tsconfig.json ./
 COPY backend/src ./src
 
@@ -21,13 +20,32 @@ ENV NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/zcaler.crt.cer
 
 CMD ["npm", "run", "start:dev"]
 
-# ---- default variant without cert ----
+# ---- default dev variant without cert ----
 FROM base AS no-cert
 CMD ["npm", "run", "start:dev"]
 
-# ---- built runtime ----
-FROM base AS runtime
+# ---- production build ----
+FROM base AS build
 RUN npm run build
+
+# ---- production dependencies ----
+FROM node:20-alpine AS prod-deps
+WORKDIR /app
+
+COPY backend/package*.json ./
+RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
+
+# ---- built runtime ----
+FROM node:20-alpine AS runtime
+WORKDIR /app
+
+RUN apk add --no-cache openssl
+
+COPY --from=prod-deps /app/node_modules ./node_modules
+COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=build /app/node_modules/@prisma/client ./node_modules/@prisma/client
+COPY --from=build /app/dist ./dist
+COPY backend/package*.json ./
 
 EXPOSE 3000
 CMD ["npm", "start"]

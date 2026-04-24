@@ -2,8 +2,9 @@ name: SCA (npm audit)
 
 on:
   pull_request:
-  push:
-    branches: [staging]
+    branches:
+      - staging
+      - main
 
 jobs:
   backend-security:
