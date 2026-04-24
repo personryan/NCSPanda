@@ -1,11 +1,9 @@
 # Dockerfile (backend)
 
-FROM node:20-bookworm-slim AS base
+FROM node:20-alpine AS base
 WORKDIR /app
 
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends openssl \
-  && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache openssl
 
 COPY backend/package*.json ./
 RUN npm ci
@@ -31,19 +29,17 @@ FROM base AS build
 RUN npm run build
 
 # ---- production dependencies ----
-FROM node:20-bookworm-slim AS prod-deps
+FROM node:20-alpine AS prod-deps
 WORKDIR /app
 
 COPY backend/package*.json ./
 RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 
 # ---- built runtime ----
-FROM node:20-bookworm-slim AS runtime
+FROM node:20-alpine AS runtime
 WORKDIR /app
 
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends openssl \
-  && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache openssl
 
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
