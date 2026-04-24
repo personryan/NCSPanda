@@ -13,19 +13,19 @@
     "prisma:migrate": "prisma migrate dev"
   },
   "dependencies": {
-    "@nestjs/common": "^10.0.0",
-    "@nestjs/core": "^10.0.0",
-    "@nestjs/jwt": "^10.0.0",
-    "@nestjs/passport": "^10.0.0",
-    "@nestjs/platform-express": "^10.0.0",
-    "@prisma/client": "^5.0.0",
+    "@nestjs/common": "^11.1.19",
+    "@nestjs/core": "^11.1.19",
+    "@nestjs/jwt": "^11.0.1",
+    "@nestjs/passport": "^11.0.5",
+    "@nestjs/platform-express": "^11.1.19",
+    "@prisma/client": "^5.22.0",
     "@supabase/supabase-js": "^2.95.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
-    "reflect-metadata": "^0.1.13",
+    "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.0"
   },
   "prisma": {
@@ -34,10 +34,17 @@
   "devDependencies": {
     "@types/express": "^4.17.25",
     "@types/node": "^25.3.0",
-    "prisma": "^5.0.0",
+    "prisma": "^5.22.0",
     "ts-node": "^10.9.1",
     "tsx": "^4.20.5",
     "typescript": "^5.0.0",
     "vitest": "^4.0.18"
+  },
+  "overrides": {
+    "minimatch": "^3.1.4",
+    "picomatch": "^4.0.4",
+    "brace-expansion": "^1.1.13",
+    "tar": "^7.5.11",
+    "vite": "^7.3.2"
   }
 }
