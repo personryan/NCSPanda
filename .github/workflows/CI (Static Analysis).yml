@@ -1,6 +1,9 @@
 name: Static Analysis ( ESLint, Typecheck ) 
 
 on:
+  push:
+    branches:
+      - feature/**
   pull_request:
     branches:
       - staging
