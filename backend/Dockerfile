@@ -4,7 +4,6 @@ ARG USE_CORP_CERT=false
 
 FROM node:20 AS base
 WORKDIR /app
-ENV NODE_ENV=development
 
 COPY backend/package*.json ./
 
@@ -25,3 +24,10 @@ CMD ["npm", "run", "start:dev"]
 # ---- default variant without cert ----
 FROM base AS no-cert
 CMD ["npm", "run", "start:dev"]
+
+# ---- built runtime ----
+FROM base AS runtime
+RUN npm run build
+
+EXPOSE 3000
+CMD ["npm", "start"]

@@ -12,7 +12,10 @@ services:
       - db_data_staging:/var/lib/postgresql/data
 
   backend:
-    build: ../backend
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+      target: runtime
     working_dir: /app
     environment:
       DATABASE_URL: postgres://ncs:password@db:5432/ncs_panda_staging
@@ -22,10 +25,17 @@ services:
       - db
 
   frontend:
-    build: ../frontend
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile
+      target: runtime
+      args:
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
     working_dir: /app
-    environment:
-      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
+    ports:
+      - "4173:4173"
     depends_on:
       - backend
 
