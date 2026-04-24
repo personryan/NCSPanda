@@ -175,7 +175,7 @@ jobs:
 
       - name: Smoke Test
         env:
-          STAGING_API_BASE_URL: ${{ secrets.STAGING_URL }}/api
+          STAGING_API_BASE_URL: ${{ secrets.STAGING_URL }}
         run: node scripts/smoke/staging-smoke.js
 
       - name: Upload smoke artifacts

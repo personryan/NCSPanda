@@ -17,6 +17,7 @@ services:
     environment:
       DATABASE_URL: postgres://ncs:password@db:5432/ncs_panda_staging
       NODE_ENV: staging
+      CORS_ORIGIN: ${STAGING_FRONTEND_ORIGIN:-http://localhost:5173}
     depends_on:
       - db
 
@@ -24,7 +25,7 @@ services:
     build: ../frontend
     working_dir: /app
     environment:
-      VITE_API_BASE_URL: http://backend:3000
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
     depends_on:
       - backend
 
