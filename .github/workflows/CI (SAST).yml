@@ -1,36 +1,40 @@
-# name: SAST (CodeQL + SonarQube)
+name: SAST (CodeQL + SonarQube)
 
-# on:
-#   pull_request:
-#     branches: [staging]
-#   push:
-#     branches-ignore: [staging]
+on:
+  pull_request:
+  push:
+    branches: [staging]
 
-# permissions:
-#   contents: read
-#   security-events: write
+permissions:
+  contents: read
+  security-events: write
 
-# jobs:
-#   codeql:
-#     name: CodeQL (JS/TS)
-#     runs-on: ubuntu-latest
-#     steps:
-#       - uses: actions/checkout@v4
+jobs:
+  codeql:
+    name: CodeQL (JavaScript/TypeScript)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-#       - name: Initialize CodeQL
-#         uses: github/codeql-action/init@v3
-#         with:
-#           languages: javascript-typescript
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
 
-#       - name: Analyze
-#         uses: github/codeql-action/analyze@v3
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
 
-  # sonar:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: Sonar scan
-  #       uses: SonarSource/sonarqube-scan-action@v7
-  #       env:
-  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-  #         # SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}  # self-hosted only
+      - name: Analyze
+        uses: github/codeql-action/analyze@v3
+
+  sonarqube:
+    name: SonarQube
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602 # v6.0.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
