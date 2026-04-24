@@ -5,9 +5,9 @@ on:
     branches:
       - staging
       - main
-  push:
-    branches:
-      - feature/**
+  # push:
+  #   branches:
+  #     - feature/**
 
 permissions:
   contents: read
