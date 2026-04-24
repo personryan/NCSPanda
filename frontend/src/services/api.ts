@@ -69,7 +69,7 @@ export interface VendorSummaryReport {
   };
   topItems: Array<{ itemId: string; name: string; quantity: number }>;
 }
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000').replace(/\/$/, '');
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
 
 export async function fetchMenuByOutlet(outletId: string): Promise<OutletMenu> {
   const response = await fetch(`${API_BASE}/api/menu?outletId=${encodeURIComponent(outletId)}`);

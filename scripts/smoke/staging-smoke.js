@@ -17,19 +17,25 @@ async function checkJson(url, options) {
   try {
     return JSON.parse(text);
   } catch {
-    throw new Error(`${url} did not return JSON`);
+    const contentType = res.headers.get('content-type') || 'unknown content-type';
+    const preview = text.replace(/\s+/g, ' ').slice(0, 200);
+    throw new Error(`${url} did not return JSON (${contentType}): ${preview}`);
   }
+}
+
+function apiUrl(path) {
+  return new URL(path, baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`).toString();
 }
 
 (async () => {
   try {
-    const menu = await checkJson(`${baseUrl}/api/menu?outletId=outlet-b6-chicken-rice`);
+    const menu = await checkJson(apiUrl('api/menu?outletId=outlet-b6-chicken-rice'));
     if (!Array.isArray(menu.items) || menu.items.length === 0) {
       throw new Error('Menu smoke check failed: no items returned');
     }
 
     const slots = await checkJson(
-      `${baseUrl}/api/pickup-slots?outletId=outlet-b6-chicken-rice&date=2099-01-01`,
+      apiUrl('api/pickup-slots?outletId=outlet-b6-chicken-rice&date=2099-01-01'),
     );
     if (!Array.isArray(slots) || slots.length === 0) {
       throw new Error('Slots smoke check failed: no slots returned');
@@ -43,7 +49,7 @@ async function checkJson(url, options) {
       customerId: 'smoke-customer',
     };
 
-    const order = await checkJson(`${baseUrl}/api/orders`, {
+    const order = await checkJson(apiUrl('api/orders'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -57,7 +63,7 @@ async function checkJson(url, options) {
     }
 
     const vendorOrders = await checkJson(
-      `${baseUrl}/api/vendor/orders?vendorOutletId=outlet-b6-chicken-rice&slotDate=2099-01-01`,
+      apiUrl('api/vendor/orders?vendorOutletId=outlet-b6-chicken-rice&slotDate=2099-01-01'),
       {
         headers: {
           'x-user-role': 'vendor',

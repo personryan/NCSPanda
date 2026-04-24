@@ -1,0 +1,36 @@
+# name: SAST (CodeQL + SonarQube)
+
+# on:
+#   pull_request:
+#     branches: [staging]
+#   push:
+#     branches-ignore: [staging]
+
+# permissions:
+#   contents: read
+#   security-events: write
+
+# jobs:
+#   codeql:
+#     name: CodeQL (JS/TS)
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v4
+
+#       - name: Initialize CodeQL
+#         uses: github/codeql-action/init@v3
+#         with:
+#           languages: javascript-typescript
+
+#       - name: Analyze
+#         uses: github/codeql-action/analyze@v3
+
+  # sonar:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Sonar scan
+  #       uses: SonarSource/sonarqube-scan-action@v7
+  #       env:
+  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  #         # SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}  # self-hosted only
