@@ -3,8 +3,8 @@ name: Deploy Production (GHCR -> DO App Platform)
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
+  # pull_request:
+  #   branches: [main]
 
 concurrency:
   group: production-${{ github.ref }}
@@ -59,10 +59,10 @@ jobs:
           context: .
           file: frontend/Dockerfile
           target: runtime
-          build-args: |
-            VITE_SUPABASE_URL=${{ secrets.VITE_PROD_SUPABASE_URL }}
-            VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_PROD_SUPABASE_ANON_KEY }}
-            VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
+          # build-args: |
+          #   VITE_SUPABASE_URL=${{ secrets.VITE_PROD_SUPABASE_URL }}
+          #   VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_PROD_SUPABASE_ANON_KEY }}
+          #   VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
           load: true
           push: false
           platforms: linux/amd64
@@ -107,10 +107,10 @@ jobs:
           context: .
           file: frontend/Dockerfile
           target: runtime
-          build-args: |
-            VITE_SUPABASE_URL=${{ secrets.VITE_PROD_SUPABASE_URL }}
-            VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_PROD_SUPABASE_ANON_KEY }}
-            VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
+          # build-args: |
+          #   VITE_SUPABASE_URL=${{ secrets.VITE_PROD_SUPABASE_URL }}
+          #   VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_PROD_SUPABASE_ANON_KEY }}
+          #   VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
           push: true
           platforms: linux/amd64
           tags: |
