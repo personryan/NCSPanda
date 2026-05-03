@@ -3,6 +3,7 @@ import {
   fetchCurrentUserProfile,
   fetchAdminUsers,
   fetchMenuByOutlet,
+  fetchMyOrders,
   fetchPickupSlots,
   fetchVendorIncomingOrders,
   fetchVendorSummaryReport,
@@ -49,7 +50,7 @@ describe('api service', () => {
         slotDate: '2099-01-01',
         slotId: 'slot-1',
         items: [{ itemId: 'item-1', quantity: 1 }],
-      }),
+      }, 'token-1'),
     ).resolves.toEqual({ orderId: 'ord-1', status: 'received' });
 
     await expect(
@@ -58,8 +59,23 @@ describe('api service', () => {
         slotDate: '2099-01-01',
         slotId: 'slot-1',
         items: [],
-      }),
+      }, 'token-1'),
     ).rejects.toThrow('slot full');
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      '/api/orders',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({ Authorization: 'Bearer token-1' }),
+        body: JSON.stringify({
+          outletId: 'outlet-1',
+          slotDate: '2099-01-01',
+          slotId: 'slot-1',
+          items: [{ itemId: 'item-1', quantity: 1 }],
+        }),
+      }),
+    );
   });
 
   it('fetches and updates vendor workflows', async () => {
@@ -67,7 +83,8 @@ describe('api service', () => {
       .mockResolvedValueOnce({ ok: true, json: async () => [{ orderId: 'ord-1' }] })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ orderId: 'ord-1', status: 'ready' }) })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ totals: { orders: 1 } }) })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ user_id: 'user-1', role_id: 2 }) });
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ user_id: 'user-1', role_id: 2 }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => [{ orderId: 'ord-2' }] });
 
     await expect(fetchVendorIncomingOrders('outlet-1', 'received')).resolves.toEqual([
       { orderId: 'ord-1' },
@@ -83,6 +100,7 @@ describe('api service', () => {
       user_id: 'user-1',
       role_id: 2,
     });
+    await expect(fetchMyOrders('token-1')).resolves.toEqual([{ orderId: 'ord-2' }]);
 
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
@@ -93,6 +111,11 @@ describe('api service', () => {
       2,
       '/api/orders/ord-1/status',
       expect.objectContaining({ method: 'PATCH' }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      5,
+      '/api/orders/me',
+      expect.objectContaining({ headers: expect.objectContaining({ Authorization: 'Bearer token-1' }) }),
     );
   });
 
@@ -154,6 +177,8 @@ describe('api service', () => {
     );
     await expect(softDeleteAdminUser('token-1', 'user-1')).rejects.toThrow(
       'Failed to deactivate user (500)',
+    await expect(fetchMyOrders('token-1')).rejects.toThrow(
+      'Failed to fetch order history (500)',
     );
   });
 });
