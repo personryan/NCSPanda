@@ -1,7 +1,8 @@
 import { useState, FormEvent } from 'react';
 import { supabase } from '../services/supabase';
+import { getApiBaseUrl } from '../services/env';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+const API_BASE = getApiBaseUrl();
 
 export default function RegisterForm({
   onSuccess,

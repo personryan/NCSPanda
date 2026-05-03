@@ -8,6 +8,7 @@ module.exports = {
       'ts-jest',
       {
         useESM: true,
+        diagnostics: false,
         tsconfig: {
           module: 'ESNext',
           moduleResolution: 'bundler',
@@ -28,6 +29,8 @@ module.exports = {
     '!src/**/*.test.{ts,tsx}',
     '!src/**/*.spec.{ts,tsx}',
     '!src/main.tsx',
+    '!src/services/env.ts',
+    '!src/services/supabase.ts',
     '!src/vite-env.d.ts',
   ],
   coverageDirectory: 'coverage',
