@@ -25,6 +25,7 @@ jest.mock('./components/RegisterForm', () => (props: { onSwitchToLogin: () => vo
 ));
 jest.mock('./pages/Menu', () => () => <div>mock-menu-page</div>);
 jest.mock('./pages/Orders', () => () => <div>mock-orders-page</div>);
+jest.mock('./pages/OrderHistory', () => () => <div>mock-history-page</div>);
 jest.mock('./pages/VendorDashboard', () => () => <div>mock-vendor-page</div>);
 jest.mock('./pages/ReportingAnalytics', () => () => <div>mock-reporting-page</div>);
 
@@ -72,5 +73,7 @@ describe('App', () => {
     expect(screen.queryByRole('button', { name: 'Vendor Dashboard' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Place Order' }));
     expect(screen.getByText('mock-orders-page')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Order History' }));
+    expect(screen.getByText('mock-history-page')).toBeTruthy();
   });
 });

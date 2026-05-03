@@ -67,6 +67,7 @@ function buildService(menuResponse: OutletMenuView, slotsResponse: PickupSlotVie
       findUnique: vi.fn().mockResolvedValue(BASE_ORDER),
       update: vi.fn().mockResolvedValue({ ...BASE_ORDER, status: 'preparing' }),
       findMany: vi.fn().mockResolvedValue([BASE_ORDER]),
+      findFirst: vi.fn().mockResolvedValue(BASE_ORDER),
     },
   } as any;
 
@@ -85,10 +86,10 @@ describe('OrdersService', () => {
       slotDate: '2099-01-01',
       slotId: 'outlet-b6-chicken-rice-2099-01-01-11:30',
       items: [{ itemId: 'item-cr-01', quantity: 1 }],
-      customerId: 'customer-123',
-    });
+    }, 'customer-123');
 
     expect(order.orderId).toBe('ord_test_123');
+    expect(order.customerId).toBe('customer-123');
     expect(order.status).toBe('received');
     expect(order.items[0].itemId).toBe('item-cr-01');
   });
@@ -102,7 +103,7 @@ describe('OrdersService', () => {
         slotDate: '2099-01-01',
         slotId: 'outlet-b6-noodles-2099-01-01-11:30',
         items: [{ itemId: 'item-cr-01', quantity: 1 }],
-      }),
+      }, 'customer-123'),
     ).rejects.toThrow(BadRequestException);
   });
 
@@ -115,7 +116,7 @@ describe('OrdersService', () => {
         slotDate: '2099-01-01',
         slotId: 'outlet-b6-chicken-rice-2099-01-01-11:30',
         items: [{ itemId: 'item-cr-03', quantity: 1 }],
-      }),
+      }, 'customer-123'),
     ).rejects.toThrow(BadRequestException);
   });
 
@@ -128,7 +129,7 @@ describe('OrdersService', () => {
         slotDate: '2099-01-01',
         slotId: 'outlet-b6-chicken-rice-2099-01-01-11:30',
         items: [],
-      }),
+      }, 'customer-123'),
     ).rejects.toThrow('Order must contain at least one item');
 
     await expect(
@@ -137,7 +138,7 @@ describe('OrdersService', () => {
         slotDate: '2099-01-01',
         slotId: 'missing-slot',
         items: [{ itemId: 'item-cr-01', quantity: 1 }],
-      }),
+      }, 'customer-123'),
     ).rejects.toThrow('Selected pickup slot does not exist');
 
     await expect(
@@ -146,8 +147,22 @@ describe('OrdersService', () => {
         slotDate: '2099-01-01',
         slotId: 'outlet-b6-chicken-rice-2099-01-01-11:30',
         items: [{ itemId: 'missing-item', quantity: 1 }],
-      }),
+      }, 'customer-123'),
     ).rejects.toThrow("Item 'missing-item' does not belong");
+  });
+
+  it('lists customer orders by authenticated customer id newest first', async () => {
+    const { service, mockPrisma } = buildService(MENU_RESPONSE, SLOTS_RESPONSE);
+
+    const orders = await service.listOrdersForCustomer('customer-123');
+
+    expect(orders[0].orderId).toBe('ord_test_123');
+    expect(mockPrisma.order.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { customer_id: 'customer-123' },
+        orderBy: { created_at: 'desc' },
+      }),
+    );
   });
 
   it('lists vendor orders with optional filters', async () => {
@@ -175,6 +190,18 @@ describe('OrdersService', () => {
     const { service } = buildService(MENU_RESPONSE, SLOTS_RESPONSE);
     const order = await service.getOrderById('ord_test_123');
     expect(order.orderId).toBe('ord_test_123');
+  });
+
+  it('returns customer-owned order tracking details', async () => {
+    const { service, mockPrisma } = buildService(MENU_RESPONSE, SLOTS_RESPONSE);
+    const order = await service.getOrderByIdForCustomer('ord_test_123', 'customer-123');
+
+    expect(order.orderId).toBe('ord_test_123');
+    expect(mockPrisma.order.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { order_id: 'ord_test_123', customer_id: 'customer-123' },
+      }),
+    );
   });
 
   it('updates order status for valid transition', async () => {
@@ -207,5 +234,10 @@ describe('OrdersService', () => {
     const { service, mockPrisma } = buildService(MENU_RESPONSE, SLOTS_RESPONSE);
     mockPrisma.order.findUnique.mockResolvedValueOnce(null);
     await expect(service.getOrderById('missing')).rejects.toThrow(NotFoundException);
+
+    mockPrisma.order.findFirst.mockResolvedValueOnce(null);
+    await expect(service.getOrderByIdForCustomer('missing', 'customer-123')).rejects.toThrow(
+      NotFoundException,
+    );
   });
 });

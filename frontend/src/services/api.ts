@@ -33,25 +33,30 @@ export interface CreateOrderPayload {
   slotDate: string;
   slotId: string;
   items: Array<{ itemId: string; quantity: number; notes?: string }>;
-  customerId?: string;
 }
 
 export type OrderStatus = 'received' | 'preparing' | 'ready';
 
-export interface VendorIncomingOrder {
+export interface OrderBase {
   orderId: string;
   customerId: string;
   outletId: string;
+  outletName?: string;
   slotDate: string;
   slotId: string;
   status: OrderStatus;
   createdAt: string;
+}
+
+export interface VendorIncomingOrder extends OrderBase {
   itemsSummary: string;
 }
 
-export interface TrackedOrder extends VendorIncomingOrder {
+export interface TrackedOrder extends OrderBase {
   items: Array<{ itemId: string; name: string; quantity: number; notes?: string }>;
 }
+
+export type CustomerOrder = TrackedOrder;
 
 
 export interface VendorSummaryReport {
@@ -98,12 +103,12 @@ export async function fetchPickupSlots(outletId: string, date: string): Promise<
   return response.json() as Promise<PickupSlot[]>;
 }
 
-export async function createOrder(payload: CreateOrderPayload) {
+export async function createOrder(payload: CreateOrderPayload, accessToken: string) {
   const response = await fetch(`${API_BASE}/api/orders`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-user-role': 'customer',
+      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify(payload),
   });
@@ -114,6 +119,21 @@ export async function createOrder(payload: CreateOrderPayload) {
   }
 
   return response.json() as Promise<{ orderId: string; status: string }>;
+}
+
+export async function fetchMyOrders(accessToken: string): Promise<CustomerOrder[]> {
+  const response = await fetch(`${API_BASE}/api/orders/me`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Failed to fetch order history (${response.status})`);
+  }
+
+  return response.json() as Promise<CustomerOrder[]>;
 }
 
 export async function fetchVendorIncomingOrders(
