@@ -177,6 +177,7 @@ describe('api service', () => {
     );
     await expect(softDeleteAdminUser('token-1', 'user-1')).rejects.toThrow(
       'Failed to deactivate user (500)',
+    );
     await expect(fetchMyOrders('token-1')).rejects.toThrow(
       'Failed to fetch order history (500)',
     );
