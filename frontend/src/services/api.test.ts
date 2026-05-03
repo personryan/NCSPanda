@@ -1,11 +1,14 @@
 import {
   createOrder,
   fetchCurrentUserProfile,
+  fetchAdminUsers,
   fetchMenuByOutlet,
   fetchMyOrders,
   fetchPickupSlots,
   fetchVendorIncomingOrders,
   fetchVendorSummaryReport,
+  softDeleteAdminUser,
+  updateAdminUser,
   updateVendorOrderStatus,
 } from './api';
 
@@ -116,6 +119,39 @@ describe('api service', () => {
     );
   });
 
+  it('manages admin user API calls with bearer auth', async () => {
+    fetchMock
+      .mockResolvedValueOnce({ ok: true, json: async () => [{ user_id: 'user-1' }] })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ user_id: 'user-2', role_id: 2 }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ user_id: 'user-2', is_active: false }) });
+
+    await expect(fetchAdminUsers('token-1')).resolves.toEqual([{ user_id: 'user-1' }]);
+    await expect(updateAdminUser('token-1', 'user-2', { role_id: 2 })).resolves.toEqual({
+      user_id: 'user-2',
+      role_id: 2,
+    });
+    await expect(softDeleteAdminUser('token-1', 'user-2')).resolves.toEqual({
+      user_id: 'user-2',
+      is_active: false,
+    });
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      '/api/admin/users',
+      expect.objectContaining({ headers: { Authorization: 'Bearer token-1' } }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      '/api/admin/users/user-2',
+      expect.objectContaining({ method: 'PATCH' }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      3,
+      '/api/admin/users/user-2',
+      expect.objectContaining({ method: 'DELETE' }),
+    );
+  });
+
   it('uses fallback error messages when error responses have no body', async () => {
     fetchMock.mockResolvedValue({ ok: false, status: 500, text: async () => '' });
 
@@ -134,6 +170,13 @@ describe('api service', () => {
     );
     await expect(fetchCurrentUserProfile('token-1')).rejects.toThrow(
       'Failed to fetch user profile (500)',
+    );
+    await expect(fetchAdminUsers('token-1')).rejects.toThrow('Failed to fetch users (500)');
+    await expect(updateAdminUser('token-1', 'user-1', { role_id: 2 })).rejects.toThrow(
+      'Failed to update user (500)',
+    );
+    await expect(softDeleteAdminUser('token-1', 'user-1')).rejects.toThrow(
+      'Failed to deactivate user (500)',
     );
     await expect(fetchMyOrders('token-1')).rejects.toThrow(
       'Failed to fetch order history (500)',
