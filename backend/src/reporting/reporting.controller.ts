@@ -8,8 +8,8 @@ export class ReportingController {
 
   @Get('vendor-summary')
   getVendorSummary(@Query() query: VendorReportQueryDto, @Headers('x-user-role') role?: string) {
-    if (role !== 'vendor' && role !== 'admin') {
-      throw new UnauthorizedException('Vendor or admin role is required');
+    if (role !== 'vendor') {
+      throw new UnauthorizedException('Vendor role is required');
     }
 
     return this.reportingService.getVendorAnalytics(query);

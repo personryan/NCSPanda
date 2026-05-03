@@ -72,6 +72,26 @@ export interface VendorSummaryReport {
   topItems: Array<{ itemId: string; name: string; quantity: number }>;
 }
 
+export interface AdminUser {
+  user_id: string;
+  role_id: number;
+  first_name: string | null;
+  last_name: string | null;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+  role?: {
+    role_name: 'customer' | 'vendor' | 'admin';
+  } | null;
+}
+
+export interface AdminUserPayload {
+  role_id?: number;
+  first_name?: string;
+  last_name?: string;
+  is_active?: boolean;
+}
+
 const API_BASE = getApiBaseUrl();
 
 export async function fetchMenuByOutlet(outletId: string): Promise<OutletMenu> {
@@ -200,4 +220,60 @@ export async function fetchCurrentUserProfile(accessToken: string) {
     role?: string | null;
     role_id?: number | null;
   }>;
+}
+
+function adminHeaders(accessToken: string) {
+  return {
+    Authorization: `Bearer ${accessToken}`,
+    'Content-Type': 'application/json',
+  };
+}
+
+export async function fetchAdminUsers(accessToken: string): Promise<AdminUser[]> {
+  const response = await fetch(`${API_BASE}/api/admin/users`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Failed to fetch users (${response.status})`);
+  }
+
+  return response.json() as Promise<AdminUser[]>;
+}
+
+export async function updateAdminUser(
+  accessToken: string,
+  userId: string,
+  payload: AdminUserPayload,
+): Promise<AdminUser> {
+  const response = await fetch(`${API_BASE}/api/admin/users/${encodeURIComponent(userId)}`, {
+    method: 'PATCH',
+    headers: adminHeaders(accessToken),
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Failed to update user (${response.status})`);
+  }
+
+  return response.json() as Promise<AdminUser>;
+}
+
+export async function softDeleteAdminUser(
+  accessToken: string,
+  userId: string,
+): Promise<AdminUser> {
+  const response = await fetch(`${API_BASE}/api/admin/users/${encodeURIComponent(userId)}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Failed to deactivate user (${response.status})`);
+  }
+
+  return response.json() as Promise<AdminUser>;
 }

@@ -27,6 +27,7 @@ jest.mock('./pages/Menu', () => () => <div>mock-menu-page</div>);
 jest.mock('./pages/Orders', () => () => <div>mock-orders-page</div>);
 jest.mock('./pages/VendorDashboard', () => () => <div>mock-vendor-page</div>);
 jest.mock('./pages/ReportingAnalytics', () => () => <div>mock-reporting-page</div>);
+jest.mock('./pages/AdminUsers', () => () => <div>mock-admin-page</div>);
 
 const session = {
   access_token: 'token-1',
@@ -72,5 +73,17 @@ describe('App', () => {
     expect(screen.queryByRole('button', { name: 'Vendor Dashboard' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Place Order' }));
     expect(screen.getByText('mock-orders-page')).toBeTruthy();
+  });
+
+  it('routes admin users only to user management', async () => {
+    (fetchCurrentUserProfile as jest.Mock).mockResolvedValue({ role_id: 3 });
+    (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session } });
+    render(<App />);
+
+    expect(await screen.findByText('mock-admin-page')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'User Management' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Browse Menu' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Browse Menu' })).toHaveProperty('disabled', true);
+    expect(screen.queryByRole('button', { name: 'Vendor Dashboard' })).toBeNull();
   });
 });

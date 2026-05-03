@@ -7,13 +7,14 @@ import MenuPage from './pages/Menu';
 import OrdersPage from './pages/Orders';
 import VendorDashboardPage from './pages/VendorDashboard';
 import ReportingAnalyticsPage from './pages/ReportingAnalytics';
+import AdminUsersPage from './pages/AdminUsers';
 import { fetchCurrentUserProfile } from './services/api';
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [showRegister, setShowRegister] = useState(false);
-  const [activePage, setActivePage] = useState<'menu' | 'order' | 'vendor' | 'reporting'>('menu');
+  const [activePage, setActivePage] = useState<'menu' | 'order' | 'vendor' | 'reporting' | 'admin'>('menu');
   const [profileRoleId, setProfileRoleId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -52,21 +53,32 @@ function App() {
   }, [session]);
 
   const role = profileRoleId === 2 ? 'vendor' : profileRoleId === 3 ? 'admin' : 'customer';
-  const canUseCustomer = role === 'customer' || role === 'admin';
-  const canUseVendor = role === 'vendor' || role === 'admin';
+  const canUseCustomer = role === 'customer';
+  const canUseVendor = role === 'vendor';
+  const canUseAdmin = role === 'admin';
 
   useEffect(() => {
     if (!session) return;
+
+    if (canUseAdmin && activePage !== 'admin') {
+      setActivePage('admin');
+      return;
+    }
 
     if (canUseVendor && activePage !== 'vendor' && activePage !== 'reporting') {
       setActivePage('vendor');
       return;
     }
 
+    if (!canUseAdmin && activePage === 'admin') {
+      setActivePage(canUseVendor ? 'vendor' : 'menu');
+      return;
+    }
+
     if (!canUseVendor && (activePage === 'vendor' || activePage === 'reporting')) {
       setActivePage('menu');
     }
-  }, [session, canUseVendor, activePage]);
+  }, [session, canUseAdmin, canUseVendor, activePage]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -167,13 +179,25 @@ function App() {
                 Reporting
               </button>
             )}
+            {canUseAdmin && (
+              <button
+                type="button"
+                className={`dashboard-nav__btn ${activePage === 'admin' ? 'dashboard-nav__btn--active' : ''}`}
+                onClick={() => setActivePage('admin')}
+                aria-current={activePage === 'admin' ? 'page' : undefined}
+              >
+                User Management
+              </button>
+            )}
           </nav>
           {activePage === 'menu' && canUseCustomer ? <MenuPage /> : null}
           {activePage === 'order' && canUseCustomer ? <OrdersPage /> : null}
           {activePage === 'vendor' && canUseVendor ? <VendorDashboardPage /> : null}
           {activePage === 'reporting' && canUseVendor ? <ReportingAnalyticsPage /> : null}
+          {activePage === 'admin' && canUseAdmin ? <AdminUsersPage accessToken={session.access_token} /> : null}
           {((activePage === 'vendor' || activePage === 'reporting') && !canUseVendor) ||
-          ((activePage === 'menu' || activePage === 'order') && !canUseCustomer) ? (
+          ((activePage === 'menu' || activePage === 'order') && !canUseCustomer) ||
+          (activePage === 'admin' && !canUseAdmin) ? (
             <div className="menu-surface">
               <p className="alert-error">You do not have permission to access this module with your current role.</p>
             </div>

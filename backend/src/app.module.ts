@@ -8,6 +8,7 @@ import { PickupSlotsModule } from './pickup-slots/pickup-slots.module';
 import { OrdersModule } from './orders/orders.module';
 import { VendorOrdersModule } from './vendor-orders/vendor-orders.module';
 import { ReportingModule } from './reporting/reporting.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ReportingModule } from './reporting/reporting.module';
     OrdersModule,
     VendorOrdersModule,
     ReportingModule,
+    AdminModule,
   ],
   controllers: [HealthController],
 })

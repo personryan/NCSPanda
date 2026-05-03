@@ -7,7 +7,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.use((req: Request, _res: Response, next: NextFunction) => {
-    const apiRoutes = ['/health', '/menu', '/orders', '/pickup-slots', '/reports', '/users', '/vendor'];
+    const apiRoutes = ['/admin', '/health', '/menu', '/orders', '/pickup-slots', '/reports', '/users', '/vendor'];
     if (apiRoutes.some((route) => req.url === route || req.url.startsWith(`${route}/`) || req.url.startsWith(`${route}?`))) {
       req.url = `/api${req.url}`;
     }
