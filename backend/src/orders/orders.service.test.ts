@@ -119,6 +119,58 @@ describe('OrdersService', () => {
     ).rejects.toThrow(BadRequestException);
   });
 
+  it('rejects empty orders, missing slots, and unknown items', async () => {
+    const { service } = buildService(MENU_RESPONSE, SLOTS_RESPONSE);
+
+    await expect(
+      service.createOrder({
+        outletId: 'outlet-b6-chicken-rice',
+        slotDate: '2099-01-01',
+        slotId: 'outlet-b6-chicken-rice-2099-01-01-11:30',
+        items: [],
+      }),
+    ).rejects.toThrow('Order must contain at least one item');
+
+    await expect(
+      service.createOrder({
+        outletId: 'outlet-b6-chicken-rice',
+        slotDate: '2099-01-01',
+        slotId: 'missing-slot',
+        items: [{ itemId: 'item-cr-01', quantity: 1 }],
+      }),
+    ).rejects.toThrow('Selected pickup slot does not exist');
+
+    await expect(
+      service.createOrder({
+        outletId: 'outlet-b6-chicken-rice',
+        slotDate: '2099-01-01',
+        slotId: 'outlet-b6-chicken-rice-2099-01-01-11:30',
+        items: [{ itemId: 'missing-item', quantity: 1 }],
+      }),
+    ).rejects.toThrow("Item 'missing-item' does not belong");
+  });
+
+  it('lists vendor orders with optional filters', async () => {
+    const { service, mockPrisma } = buildService(MENU_RESPONSE, SLOTS_RESPONSE);
+
+    const orders = await service.listOrdersForVendor({
+      outletId: 'outlet-b6-chicken-rice',
+      slotDate: '2099-01-01',
+      status: 'received',
+    });
+
+    expect(orders[0].orderId).toBe('ord_test_123');
+    expect(mockPrisma.order.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          outlet_id: 'outlet-b6-chicken-rice',
+          slot_date: new Date('2099-01-01'),
+          status: 'received',
+        },
+      }),
+    );
+  });
+
   it('returns order tracking details', async () => {
     const { service } = buildService(MENU_RESPONSE, SLOTS_RESPONSE);
     const order = await service.getOrderById('ord_test_123');
@@ -129,6 +181,19 @@ describe('OrdersService', () => {
     const { service } = buildService(MENU_RESPONSE, SLOTS_RESPONSE);
     const order = await service.updateOrderStatus('ord_test_123', 'preparing');
     expect(order.status).toBe('preparing');
+  });
+
+  it('allows idempotent status updates and rejects update for missing orders', async () => {
+    const { service, mockPrisma } = buildService(MENU_RESPONSE, SLOTS_RESPONSE);
+    mockPrisma.order.update.mockResolvedValueOnce({ ...BASE_ORDER, status: 'received' });
+    await expect(service.updateOrderStatus('ord_test_123', 'received')).resolves.toMatchObject({
+      status: 'received',
+    });
+
+    mockPrisma.order.findUnique.mockResolvedValueOnce(null);
+    await expect(service.updateOrderStatus('missing', 'preparing')).rejects.toThrow(
+      NotFoundException,
+    );
   });
 
   it('rejects invalid status transitions', async () => {

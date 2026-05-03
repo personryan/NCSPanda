@@ -121,7 +121,7 @@ jobs:
 
       # - name: Restore archived DO app (if archived)
       #   env:
-      #     DO_TOKEN: ${{ secrets.NCSPANDA_DOPRODUCTION }}
+      #     DO_TOKEN: ${{ secrets.NCSPANDA_DOSTAGING }}
       #     DO_APP_NAME: ${{ secrets.DO_APP_NAME_PRODUCTION }}
       #   run: |
       #     set -euo pipefail
@@ -166,7 +166,7 @@ jobs:
       #     IMAGE_TAG_PERSONRYAN-NCSPANDA-BACKEND: ${{ env.IMAGE_TAG }}
       #     IMAGE_TAG_PERSONRYAN-NCSPANDA-FRONTEND: ${{ env.IMAGE_TAG }}
       #   with:
-      #     token: ${{ secrets.NCSPANDA_DOPRODUCTION }}
+      #     token: ${{ secrets.NCSPANDA_DOSTAGING }}
       #     app_name: ${{ env.DO_APP_NAME_PRODUCTION }}
       #     print_build_logs: "true"
       #     print_deploy_logs: "true"
