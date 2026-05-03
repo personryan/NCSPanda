@@ -119,72 +119,72 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # - name: Restore archived DO app (if archived)
-      #   env:
-      #     DO_TOKEN: ${{ secrets.NCSPANDA_DOSTAGING }}
-      #     DO_APP_NAME: ${{ secrets.DO_APP_NAME_PRODUCTION }}
-      #   run: |
-      #     set -euo pipefail
+      - name: Restore archived DO app (if archived)
+        env:
+          DO_TOKEN: ${{ secrets.NCSPANDA_DOSTAGING }}
+          DO_APP_NAME: ${{ secrets.DO_APP_NAME_PRODUCTION }}
+        run: |
+          set -euo pipefail
 
-      #     API="https://api.digitalocean.com/v2"
-      #     HDR_AUTH="Authorization: Bearer $DO_TOKEN"
-      #     HDR_CT="Content-Type: application/json"
+          API="https://api.digitalocean.com/v2"
+          HDR_AUTH="Authorization: Bearer $DO_TOKEN"
+          HDR_CT="Content-Type: application/json"
 
-      #     # Find app ID by app spec name
-      #     APP_ID=$(curl -fsS -H "$HDR_AUTH" "$API/apps?per_page=200" \
-      #       | jq -r --arg NAME "$DO_APP_NAME" '.apps[] | select(.spec.name == $NAME) | .id' \
-      #       | head -n1)
+          # Find app ID by app spec name
+          APP_ID=$(curl -fsS -H "$HDR_AUTH" "$API/apps?per_page=200" \
+            | jq -r --arg NAME "$DO_APP_NAME" '.apps[] | select(.spec.name == $NAME) | .id' \
+            | head -n1)
 
-      #     if [ -z "${APP_ID:-}" ] || [ "$APP_ID" = "null" ]; then
-      #       echo "App not found for name: $DO_APP_NAME"
-      #       exit 1
-      #     fi
+          if [ -z "${APP_ID:-}" ] || [ "$APP_ID" = "null" ]; then
+            echo "App not found for name: $DO_APP_NAME"
+            exit 1
+          fi
 
-      #     # Read current app spec + archive state
-      #     APP_JSON=$(curl -fsS -H "$HDR_AUTH" "$API/apps/$APP_ID")
-      #     IS_ARCHIVED=$(echo "$APP_JSON" | jq -r '.app.spec.maintenance.archive // false')
+          # Read current app spec + archive state
+          APP_JSON=$(curl -fsS -H "$HDR_AUTH" "$API/apps/$APP_ID")
+          IS_ARCHIVED=$(echo "$APP_JSON" | jq -r '.app.spec.maintenance.archive // false')
 
-      #     if [ "$IS_ARCHIVED" != "true" ]; then
-      #       echo "App is not archived. No restore needed."
-      #       exit 0
-      #     fi
+          if [ "$IS_ARCHIVED" != "true" ]; then
+            echo "App is not archived. No restore needed."
+            exit 0
+          fi
 
-      #     echo "App is archived. Restoring..."
-      #     UPDATED_SPEC=$(echo "$APP_JSON" | jq '.app.spec | .maintenance = ((.maintenance // {}) + {archive:false})')
-      #     jq -n --argjson spec "$UPDATED_SPEC" '{spec:$spec}' > restore-payload.json
+          echo "App is archived. Restoring..."
+          UPDATED_SPEC=$(echo "$APP_JSON" | jq '.app.spec | .maintenance = ((.maintenance // {}) + {archive:false})')
+          jq -n --argjson spec "$UPDATED_SPEC" '{spec:$spec}' > restore-payload.json
 
-      #     curl -fsS -X PUT "$API/apps/$APP_ID" \
-      #       -H "$HDR_AUTH" \
-      #       -H "$HDR_CT" \
-      #       --data @restore-payload.json > /dev/null
+          curl -fsS -X PUT "$API/apps/$APP_ID" \
+            -H "$HDR_AUTH" \
+            -H "$HDR_CT" \
+            --data @restore-payload.json > /dev/null
 
-      #     echo "Restore request submitted."
+          echo "Restore request submitted."
 
-      # - name: Deploy to DigitalOcean App Platform
-      #   uses: digitalocean/app_action/deploy@v2
-      #   env:
-      #     IMAGE_TAG_PERSONRYAN-NCSPANDA-BACKEND: ${{ env.IMAGE_TAG }}
-      #     IMAGE_TAG_PERSONRYAN-NCSPANDA-FRONTEND: ${{ env.IMAGE_TAG }}
-      #   with:
-      #     token: ${{ secrets.NCSPANDA_DOSTAGING }}
-      #     app_name: ${{ env.DO_APP_NAME_PRODUCTION }}
-      #     print_build_logs: "true"
-      #     print_deploy_logs: "true"
+      - name: Deploy to DigitalOcean App Platform
+        uses: digitalocean/app_action/deploy@v2
+        env:
+          IMAGE_TAG_PERSONRYAN-NCSPANDA-BACKEND: ${{ env.IMAGE_TAG }}
+          IMAGE_TAG_PERSONRYAN-NCSPANDA-FRONTEND: ${{ env.IMAGE_TAG }}
+        with:
+          token: ${{ secrets.NCSPANDA_DOSTAGING }}
+          app_name: ${{ env.DO_APP_NAME_PRODUCTION }}
+          print_build_logs: "true"
+          print_deploy_logs: "true"
 
-      # - name: Wait for Production Environment
-      #   run: |
-      #     # This loop pings the URL every 5 seconds, timing out after 5 minutes (300s)
-      #     timeout 300s bash -c 'until curl -sIL ${{ secrets.PRODUCTION_URL }} | grep "200"; do echo "Still waiting..."; sleep 5; done'
-      #   shell: bash
+      - name: Wait for Production Environment
+        run: |
+          # This loop pings the URL every 5 seconds, timing out after 5 minutes (300s)
+          timeout 300s bash -c 'until curl -sIL ${{ secrets.PRODUCTION_URL }} | grep "200"; do echo "Still waiting..."; sleep 5; done'
+        shell: bash
 
-      # - name: Smoke Test
-      #   env:
-      #     STAGING_API_BASE_URL: ${{ secrets.PRODUCTION_URL }}
-      #   run: node scripts/smoke/staging-smoke.js
+      - name: Smoke Test
+        env:
+          STAGING_API_BASE_URL: ${{ secrets.PRODUCTION_URL }}
+        run: node scripts/smoke/staging-smoke.js
 
-      # - name: Upload smoke artifacts
-      #   if: always()
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: production-smoke-log
-      #     path: scripts/smoke/staging-smoke.js
+      - name: Upload smoke artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-smoke-log
+          path: scripts/smoke/staging-smoke.js
