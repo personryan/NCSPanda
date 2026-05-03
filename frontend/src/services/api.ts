@@ -1,3 +1,5 @@
+import { getApiBaseUrl } from './env';
+
 export interface MenuItem {
   itemId: string;
   name: string;
@@ -69,7 +71,8 @@ export interface VendorSummaryReport {
   };
   topItems: Array<{ itemId: string; name: string; quantity: number }>;
 }
-const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
+
+const API_BASE = getApiBaseUrl();
 
 export async function fetchMenuByOutlet(outletId: string): Promise<OutletMenu> {
   const response = await fetch(`${API_BASE}/api/menu?outletId=${encodeURIComponent(outletId)}`);
