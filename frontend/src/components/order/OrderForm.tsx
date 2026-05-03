@@ -8,6 +8,7 @@ import {
 } from '../../services/api';
 import SlotPicker from './SlotPicker';
 import OrderSummary from './OrderSummary';
+import { getLocalDateInputValue } from '../../utils/date';
 
 const outletOptions = [
   { id: 'outlet-b6-chicken-rice', label: 'B6 Chicken Rice' },
@@ -16,7 +17,8 @@ const outletOptions = [
 
 export default function OrderForm() {
   const [outletId, setOutletId] = useState(outletOptions[0].id);
-  const [slotDate, setSlotDate] = useState('2099-01-01');
+  const [today] = useState(() => getLocalDateInputValue());
+  const [slotDate, setSlotDate] = useState(today);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [slots, setSlots] = useState<PickupSlot[]>([]);
   const [selectedSlotId, setSelectedSlotId] = useState('');
@@ -86,7 +88,7 @@ export default function OrderForm() {
           </select>
 
           <label className="form-label" htmlFor="slot-date">Pickup date</label>
-          <input id="slot-date" className="form-input" type="date" value={slotDate} onChange={(e) => setSlotDate(e.target.value)} />
+          <input id="slot-date" className="form-input" type="date" min={today} value={slotDate} onChange={(e) => setSlotDate(e.target.value)} />
 
           <h2 style={{ marginTop: '1rem' }}>Pickup Slots</h2>
           <SlotPicker slots={slots} selectedSlotId={selectedSlotId} onSelect={setSelectedSlotId} />
