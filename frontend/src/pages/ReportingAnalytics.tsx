@@ -1,19 +1,16 @@
 import { useEffect, useState } from 'react';
 import { fetchVendorSummaryReport, VendorSummaryReport } from '../services/api';
+import { getLocalDateInputValue } from '../utils/date';
 
 const outletOptions = [
   { id: 'outlet-b6-chicken-rice', label: 'B6 Chicken Rice' },
   { id: 'outlet-b6-noodles', label: 'B6 Noodles' },
 ];
 
-function getToday() {
-  return new Date().toISOString().split('T')[0];
-}
-
 export default function ReportingAnalyticsPage() {
   const [outletId, setOutletId] = useState(outletOptions[0].id);
-  const [fromDate, setFromDate] = useState(getToday());
-  const [toDate, setToDate] = useState(getToday());
+  const [fromDate, setFromDate] = useState(() => getLocalDateInputValue());
+  const [toDate, setToDate] = useState(() => getLocalDateInputValue());
   const [summary, setSummary] = useState<VendorSummaryReport | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
