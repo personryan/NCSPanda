@@ -160,7 +160,7 @@ jobs:
 
           echo "Restore request submitted."
 
-      - name: Ensure autoscaling metrics exist
+      - name: Fetch current DO app spec
         env:
           DO_APP_ID: ${{ secrets.DO_STAGING_APP_ID }}
         run: |
@@ -168,15 +168,8 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.NCSPANDA_DOSTAGING }}" \
             -H "Content-Type: application/json" \
             -o app.json
-
-          jq '.app.spec.services |= map(
-            if .autoscaling then
-              .autoscaling.metrics = (
-                .autoscaling.metrics // { "requests_per_second": 100 }
-              )
-            else .
-            end
-          ) | .app' app.json > fixed-spec.json
+          # Extract just the "app spec" portion
+          jq '.app.spec' app.json > final-spec.json
 
       - name: Deploy to DigitalOcean App Platform
         uses: digitalocean/app_action/deploy@v2
@@ -188,7 +181,7 @@ jobs:
           app_name: ${{ env.DO_APP_NAME_STAGING }}
           print_build_logs: "true"
           print_deploy_logs: "true"
-          spec: fixed-spec.json
+          app_spec_location: fixed-spec.json
 
       - name: Staging Environment Health Check
         run: |
