@@ -3,6 +3,7 @@ import { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabase';
 import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
+import ForgotPasswordForm from './components/ForgotPasswordForm';
 import MenuPage from './pages/Menu';
 import OrdersPage from './pages/Orders';
 import OrderHistoryPage from './pages/OrderHistory';
@@ -15,6 +16,7 @@ function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [showRegister, setShowRegister] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [activePage, setActivePage] = useState<'menu' | 'order' | 'history' | 'vendor' | 'reporting' | 'admin' >('menu');
   const [profileRoleId, setProfileRoleId] = useState<number | null>(null);
 
@@ -110,7 +112,12 @@ function App() {
           <span className="app-logo">NCS Panda</span>
         </header>
         <main className="app-main">
-          {showRegister ? (
+          {showForgotPassword ? (
+            <ForgotPasswordForm
+              onSuccess={() => setShowForgotPassword(false)}
+              onSwitchToLogin={() => setShowForgotPassword(false)}
+            />
+          ) : showRegister ? (
             <RegisterForm
               onSuccess={() => setShowRegister(false)}
               onSwitchToLogin={() => setShowRegister(false)}
@@ -119,6 +126,7 @@ function App() {
             <LoginForm
               onSuccess={() => {}}
               onSwitchToRegister={() => setShowRegister(true)}
+              onSwitchToForgotPassword={() => setShowForgotPassword(true)}
             />
           )}
         </main>
