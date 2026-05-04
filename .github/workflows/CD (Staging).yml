@@ -168,8 +168,20 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.NCSPANDA_DOSTAGING }}" \
             -H "Content-Type: application/json" \
             -o app.json
+          jq '
+            .app.spec.services |= map(
+              if .autoscaling != null then
+                .autoscaling.metrics.requests_per_second =
+                  (if (.autoscaling.metrics.requests_per_second | type) == "object"
+                  then .autoscaling.metrics.requests_per_second.per_instance
+                  else .autoscaling.metrics.requests_per_second
+                  end)
+              else .
+              end
+            )
+            | .app.spec
+          ' app.json > fixed-spec.json
           # debug output to verify we got the app spec
-          jq '.app.spec' app.json > fixed-spec.json
           cat fixed-spec.json | jq '.services[].autoscaling'
 
       - name: Deploy to DigitalOcean App Platform
