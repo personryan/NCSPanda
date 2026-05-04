@@ -26,8 +26,8 @@ jest.mock('./components/LoginForm', () => (props: { onSwitchToRegister?: () => v
 jest.mock('./components/RegisterForm', () => (props: { onSwitchToLogin: () => void }) => (
   <button type="button" onClick={props.onSwitchToLogin}>mock-register-login</button>
 ));
-jest.mock('./components/ResetPasswordForm', () => (props: { onReturnToLogin: () => void }) => (
-  <button type="button" onClick={props.onReturnToLogin}>mock-reset-login</button>
+jest.mock('./components/ForgotPasswordForm', () => (props: { onSwitchToLogin: () => void }) => (
+  <button type="button" onClick={props.onSwitchToLogin}>mock-forgot-login</button>
 ));
 jest.mock('./components/ResetPasswordForm', () => (props: { onReturnToLogin: () => void }) => (
   <button type="button" onClick={props.onReturnToLogin}>mock-reset-login</button>
@@ -52,6 +52,10 @@ describe('App', () => {
     });
     (supabase.auth.signOut as jest.Mock).mockResolvedValue({});
     (fetchCurrentUserProfile as jest.Mock).mockResolvedValue({ role_id: 2 });
+  });
+
+  afterEach(() => {
+    globalThis.location.hash = '';
   });
 
   it('shows login/register/forgot password screens when unauthenticated', async () => {
