@@ -7,6 +7,9 @@ yarn-error.log*
 # Build outputs
 dist/
 build/
+coverage/
+backend/coverage/
+frontend/coverage/
 
 # Env files
 .env

@@ -3,9 +3,10 @@ import { OrdersController } from './orders.controller';
 import { OrdersService } from './orders.service';
 import { MenuModule } from '../menu/menu.module';
 import { PickupSlotsModule } from '../pickup-slots/pickup-slots.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [MenuModule, PickupSlotsModule],
+  imports: [MenuModule, PickupSlotsModule, AuthModule],
   controllers: [OrdersController],
   providers: [OrdersService],
   exports: [OrdersService],

@@ -17,16 +17,27 @@ jest.mock('./services/supabase', () => ({
   },
 }));
 
-jest.mock('./components/LoginForm', () => (props: { onSwitchToRegister: () => void }) => (
-  <button type="button" onClick={props.onSwitchToRegister}>mock-login</button>
+jest.mock('./components/LoginForm', () => (props: { onSwitchToRegister?: () => void; onSwitchToForgotPassword?: () => void }) => (
+  <div>
+    <button type="button" onClick={props.onSwitchToRegister}>mock-login-register</button>
+    <button type="button" onClick={props.onSwitchToForgotPassword}>mock-login-forgot</button>
+  </div>
 ));
 jest.mock('./components/RegisterForm', () => (props: { onSwitchToLogin: () => void }) => (
-  <button type="button" onClick={props.onSwitchToLogin}>mock-register</button>
+  <button type="button" onClick={props.onSwitchToLogin}>mock-register-login</button>
+));
+jest.mock('./components/ForgotPasswordForm', () => (props: { onSwitchToLogin: () => void }) => (
+  <button type="button" onClick={props.onSwitchToLogin}>mock-forgot-login</button>
+));
+jest.mock('./components/ResetPasswordForm', () => (props: { onReturnToLogin: () => void }) => (
+  <button type="button" onClick={props.onReturnToLogin}>mock-reset-login</button>
 ));
 jest.mock('./pages/Menu', () => () => <div>mock-menu-page</div>);
 jest.mock('./pages/Orders', () => () => <div>mock-orders-page</div>);
+jest.mock('./pages/OrderHistory', () => () => <div>mock-history-page</div>);
 jest.mock('./pages/VendorDashboard', () => () => <div>mock-vendor-page</div>);
 jest.mock('./pages/ReportingAnalytics', () => () => <div>mock-reporting-page</div>);
+jest.mock('./pages/AdminUsers', () => () => <div>mock-admin-page</div>);
 
 const session = {
   access_token: 'token-1',
@@ -35,6 +46,7 @@ const session = {
 
 describe('App', () => {
   beforeEach(() => {
+    globalThis.location.hash = '';
     (supabase.auth.onAuthStateChange as jest.Mock).mockReturnValue({
       data: { subscription: { unsubscribe: jest.fn() } },
     });
@@ -42,13 +54,21 @@ describe('App', () => {
     (fetchCurrentUserProfile as jest.Mock).mockResolvedValue({ role_id: 2 });
   });
 
-  it('shows login/register screens when unauthenticated', async () => {
+  afterEach(() => {
+    globalThis.location.hash = '';
+  });
+
+  it('shows login/register/forgot password screens when unauthenticated', async () => {
     (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: null } });
     render(<App />);
 
-    expect(await screen.findByText('mock-login')).toBeTruthy();
-    fireEvent.click(screen.getByText('mock-login'));
-    expect(screen.getByText('mock-register')).toBeTruthy();
+    expect(await screen.findByText('mock-login-register')).toBeTruthy();
+    fireEvent.click(screen.getByText('mock-login-register'));
+    expect(screen.getByText('mock-register-login')).toBeTruthy();
+    fireEvent.click(screen.getByText('mock-register-login'));
+    expect(screen.getByText('mock-login-register')).toBeTruthy();
+    fireEvent.click(screen.getByText('mock-login-forgot'));
+    expect(screen.getByText('mock-forgot-login')).toBeTruthy();
   });
 
   it('routes vendor users to vendor and reporting pages and signs out', async () => {
@@ -72,5 +92,48 @@ describe('App', () => {
     expect(screen.queryByRole('button', { name: 'Vendor Dashboard' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Place Order' }));
     expect(screen.getByText('mock-orders-page')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Order History' }));
+    expect(screen.getByText('mock-history-page')).toBeTruthy();
+  });
+
+  it('routes admin users only to user management', async () => {
+    (fetchCurrentUserProfile as jest.Mock).mockResolvedValue({ role_id: 3 });
+    (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session } });
+    render(<App />);
+
+    expect(await screen.findByText('mock-admin-page')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'User Management' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Browse Menu' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Browse Menu' })).toHaveProperty('disabled', true);
+    expect(screen.queryByRole('button', { name: 'Vendor Dashboard' })).toBeNull();
+  });
+
+  it('shows forgot password form when user clicks forgot password and returns to login', async () => {
+    (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: null } });
+    render(<App />);
+
+    expect(await screen.findByText('mock-login-register')).toBeTruthy();
+    fireEvent.click(screen.getByText('mock-login-forgot'));
+    expect(screen.getByText('mock-forgot-login')).toBeTruthy();
+    fireEvent.click(screen.getByText('mock-forgot-login'));
+    expect(screen.getByText('mock-login-register')).toBeTruthy();
+  });
+
+  it('shows reset password form when recovery hash is detected', async () => {
+    (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: null } });
+    globalThis.location.hash = '#type=recovery&token=reset-token-123';
+    render(<App />);
+
+    expect(await screen.findByText('mock-reset-login')).toBeTruthy();
+    fireEvent.click(screen.getByText('mock-reset-login'));
+    expect(screen.getByText('mock-login-register')).toBeTruthy();
+  });
+
+  it('shows reset password form when expired reset hash is detected', async () => {
+    (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: null } });
+    globalThis.location.hash = '#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired&sb=';
+    render(<App />);
+
+    expect(await screen.findByText('mock-reset-login')).toBeTruthy();
   });
 });

@@ -4,9 +4,11 @@ import { supabase } from '../services/supabase';
 export default function LoginForm({
   onSuccess,
   onSwitchToRegister,
+  onSwitchToForgotPassword,
 }: {
   onSuccess: () => void;
   onSwitchToRegister?: () => void;
+  onSwitchToForgotPassword?: () => void;
 }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -70,6 +72,14 @@ export default function LoginForm({
       <button type="submit" disabled={loading} className="btn btn-primary">
         {loading ? 'Signing in…' : 'Sign in'}
       </button>
+
+      {onSwitchToForgotPassword && (
+        <p style={{ marginTop: '1rem', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
+          <button type="button" className="btn-link" onClick={onSwitchToForgotPassword}>
+            Forgot password?
+          </button>
+        </p>
+      )}
 
       {onSwitchToRegister && (
         <p style={{ marginTop: '1.25rem', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>

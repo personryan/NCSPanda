@@ -33,25 +33,30 @@ export interface CreateOrderPayload {
   slotDate: string;
   slotId: string;
   items: Array<{ itemId: string; quantity: number; notes?: string }>;
-  customerId?: string;
 }
 
 export type OrderStatus = 'received' | 'preparing' | 'ready';
 
-export interface VendorIncomingOrder {
+export interface OrderBase {
   orderId: string;
   customerId: string;
   outletId: string;
+  outletName?: string;
   slotDate: string;
   slotId: string;
   status: OrderStatus;
   createdAt: string;
+}
+
+export interface VendorIncomingOrder extends OrderBase {
   itemsSummary: string;
 }
 
-export interface TrackedOrder extends VendorIncomingOrder {
+export interface TrackedOrder extends OrderBase {
   items: Array<{ itemId: string; name: string; quantity: number; notes?: string }>;
 }
+
+export type CustomerOrder = TrackedOrder;
 
 
 export interface VendorSummaryReport {
@@ -72,7 +77,36 @@ export interface VendorSummaryReport {
   topItems: Array<{ itemId: string; name: string; quantity: number }>;
 }
 
+export interface AdminUser {
+  user_id: string;
+  role_id: number;
+  first_name: string | null;
+  last_name: string | null;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+  role?: {
+    role_name: 'customer' | 'vendor' | 'admin';
+  } | null;
+}
+
+export interface AdminUserPayload {
+  role_id?: number;
+  first_name?: string;
+  last_name?: string;
+  is_active?: boolean;
+}
+
 const API_BASE = getApiBaseUrl();
+const SAFE_PATH_SEGMENT = /^[A-Za-z0-9_-]+$/;
+
+function encodeSafePathSegment(value: string, fieldName: string): string {
+  if (!SAFE_PATH_SEGMENT.test(value)) {
+    throw new Error(`Invalid ${fieldName}`);
+  }
+
+  return encodeURIComponent(value);
+}
 
 export async function fetchMenuByOutlet(outletId: string): Promise<OutletMenu> {
   const response = await fetch(`${API_BASE}/api/menu?outletId=${encodeURIComponent(outletId)}`);
@@ -98,12 +132,12 @@ export async function fetchPickupSlots(outletId: string, date: string): Promise<
   return response.json() as Promise<PickupSlot[]>;
 }
 
-export async function createOrder(payload: CreateOrderPayload) {
+export async function createOrder(payload: CreateOrderPayload, accessToken: string) {
   const response = await fetch(`${API_BASE}/api/orders`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-user-role': 'customer',
+      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify(payload),
   });
@@ -114,6 +148,21 @@ export async function createOrder(payload: CreateOrderPayload) {
   }
 
   return response.json() as Promise<{ orderId: string; status: string }>;
+}
+
+export async function fetchMyOrders(accessToken: string): Promise<CustomerOrder[]> {
+  const response = await fetch(`${API_BASE}/api/orders/me`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Failed to fetch order history (${response.status})`);
+  }
+
+  return response.json() as Promise<CustomerOrder[]>;
 }
 
 export async function fetchVendorIncomingOrders(
@@ -200,4 +249,62 @@ export async function fetchCurrentUserProfile(accessToken: string) {
     role?: string | null;
     role_id?: number | null;
   }>;
+}
+
+function adminHeaders(accessToken: string) {
+  return {
+    Authorization: `Bearer ${accessToken}`,
+    'Content-Type': 'application/json',
+  };
+}
+
+export async function fetchAdminUsers(accessToken: string): Promise<AdminUser[]> {
+  const response = await fetch(`${API_BASE}/api/admin/users`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Failed to fetch users (${response.status})`);
+  }
+
+  return response.json() as Promise<AdminUser[]>;
+}
+
+export async function updateAdminUser(
+  accessToken: string,
+  userId: string,
+  payload: AdminUserPayload,
+): Promise<AdminUser> {
+  const safeUserId = encodeSafePathSegment(userId, 'user ID');
+  const response = await fetch(`${API_BASE}/api/admin/users/${safeUserId}`, {
+    method: 'PATCH',
+    headers: adminHeaders(accessToken),
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Failed to update user (${response.status})`);
+  }
+
+  return response.json() as Promise<AdminUser>;
+}
+
+export async function softDeleteAdminUser(
+  accessToken: string,
+  userId: string,
+): Promise<AdminUser> {
+  const safeUserId = encodeSafePathSegment(userId, 'user ID');
+  const response = await fetch(`${API_BASE}/api/admin/users/${safeUserId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Failed to deactivate user (${response.status})`);
+  }
+
+  return response.json() as Promise<AdminUser>;
 }

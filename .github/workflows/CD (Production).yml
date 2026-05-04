@@ -74,14 +74,14 @@ jobs:
         uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2
         with:
           image: localbuild/backend:scan
-          fail-build: false # temporary to test workflow
+          fail-build: true # temporary to test workflow
           severity-cutoff: critical
 
       - name: Scan frontend image (fail on critical)
         uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2
         with:
           image: localbuild/frontend:scan
-          fail-build: false # temporary to test workflow
+          fail-build: true # temporary to test workflow
           severity-cutoff: critical
 
       # Push to GHCR (capture digests)

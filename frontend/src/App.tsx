@@ -3,17 +3,23 @@ import { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabase';
 import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
+import ForgotPasswordForm from './components/ForgotPasswordForm';
+import ResetPasswordForm from './components/ResetPasswordForm';
 import MenuPage from './pages/Menu';
 import OrdersPage from './pages/Orders';
+import OrderHistoryPage from './pages/OrderHistory';
 import VendorDashboardPage from './pages/VendorDashboard';
 import ReportingAnalyticsPage from './pages/ReportingAnalytics';
+import AdminUsersPage from './pages/AdminUsers';
 import { fetchCurrentUserProfile } from './services/api';
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [showRegister, setShowRegister] = useState(false);
-  const [activePage, setActivePage] = useState<'menu' | 'order' | 'vendor' | 'reporting'>('menu');
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [activePage, setActivePage] = useState<'menu' | 'order' | 'history' | 'vendor' | 'reporting' | 'admin' >('menu');
   const [profileRoleId, setProfileRoleId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -26,6 +32,19 @@ function App() {
       (_event, session) => setSession(session),
     );
     return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const hash = globalThis.location.hash;
+    const pathname = globalThis.location.pathname;
+    const hasRecoveryHash = hash.includes('type=recovery');
+    const hasResetErrorHash = hash.includes('error_code=otp_expired') || hash.includes('error=access_denied');
+    const normalizedPath = pathname.replace(/\/+$/, '');
+    const isResetPasswordPath = normalizedPath.endsWith('/reset-password');
+
+    if (hasRecoveryHash || hasResetErrorHash || isResetPasswordPath) {
+      setShowResetPassword(true);
+    }
   }, []);
 
   useEffect(() => {
@@ -52,21 +71,32 @@ function App() {
   }, [session]);
 
   const role = profileRoleId === 2 ? 'vendor' : profileRoleId === 3 ? 'admin' : 'customer';
-  const canUseCustomer = role === 'customer' || role === 'admin';
-  const canUseVendor = role === 'vendor' || role === 'admin';
+  const canUseCustomer = role === 'customer';
+  const canUseVendor = role === 'vendor';
+  const canUseAdmin = role === 'admin';
 
   useEffect(() => {
     if (!session) return;
+
+    if (canUseAdmin && activePage !== 'admin') {
+      setActivePage('admin');
+      return;
+    }
 
     if (canUseVendor && activePage !== 'vendor' && activePage !== 'reporting') {
       setActivePage('vendor');
       return;
     }
 
+    if (!canUseAdmin && activePage === 'admin') {
+      setActivePage(canUseVendor ? 'vendor' : 'menu');
+      return;
+    }
+
     if (!canUseVendor && (activePage === 'vendor' || activePage === 'reporting')) {
       setActivePage('menu');
     }
-  }, [session, canUseVendor, activePage]);
+  }, [session, canUseAdmin, canUseVendor, activePage]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -90,6 +120,40 @@ function App() {
     );
   }
 
+  let unauthenticatedContent = (
+    <LoginForm
+      onSuccess={() => {}}
+      onSwitchToRegister={() => setShowRegister(true)}
+      onSwitchToForgotPassword={() => setShowForgotPassword(true)}
+    />
+  );
+
+  if (showResetPassword) {
+    unauthenticatedContent = (
+      <ResetPasswordForm
+        onSuccess={() => {
+          setShowResetPassword(false);
+          setSession(null);
+        }}
+        onReturnToLogin={() => setShowResetPassword(false)}
+      />
+    );
+  } else if (showForgotPassword) {
+    unauthenticatedContent = (
+      <ForgotPasswordForm
+        onSuccess={() => setShowForgotPassword(false)}
+        onSwitchToLogin={() => setShowForgotPassword(false)}
+      />
+    );
+  } else if (showRegister) {
+    unauthenticatedContent = (
+      <RegisterForm
+        onSuccess={() => setShowRegister(false)}
+        onSwitchToLogin={() => setShowRegister(false)}
+      />
+    );
+  }
+
   if (!session) {
     return (
       <div className="app-shell">
@@ -97,17 +161,7 @@ function App() {
           <span className="app-logo">NCS Panda</span>
         </header>
         <main className="app-main">
-          {showRegister ? (
-            <RegisterForm
-              onSuccess={() => setShowRegister(false)}
-              onSwitchToLogin={() => setShowRegister(false)}
-            />
-          ) : (
-            <LoginForm
-              onSuccess={() => {}}
-              onSwitchToRegister={() => setShowRegister(true)}
-            />
-          )}
+          {unauthenticatedContent}
         </main>
       </div>
     );
@@ -147,6 +201,15 @@ function App() {
             >
               Place Order
             </button>
+            <button
+              type="button"
+              className={`dashboard-nav__btn ${activePage === 'history' ? 'dashboard-nav__btn--active' : ''}`}
+              onClick={() => setActivePage('history')}
+              disabled={!canUseCustomer}
+              aria-current={activePage === 'history' ? 'page' : undefined}
+            >
+              Order History
+            </button>
             {canUseVendor && (
               <button
                 type="button"
@@ -167,13 +230,26 @@ function App() {
                 Reporting
               </button>
             )}
+            {canUseAdmin && (
+              <button
+                type="button"
+                className={`dashboard-nav__btn ${activePage === 'admin' ? 'dashboard-nav__btn--active' : ''}`}
+                onClick={() => setActivePage('admin')}
+                aria-current={activePage === 'admin' ? 'page' : undefined}
+              >
+                User Management
+              </button>
+            )}
           </nav>
           {activePage === 'menu' && canUseCustomer ? <MenuPage /> : null}
-          {activePage === 'order' && canUseCustomer ? <OrdersPage /> : null}
+          {activePage === 'order' && canUseCustomer ? <OrdersPage accessToken={session.access_token} /> : null}
+          {activePage === 'history' && canUseCustomer ? <OrderHistoryPage accessToken={session.access_token} /> : null}
           {activePage === 'vendor' && canUseVendor ? <VendorDashboardPage /> : null}
           {activePage === 'reporting' && canUseVendor ? <ReportingAnalyticsPage /> : null}
+          {activePage === 'admin' && canUseAdmin ? <AdminUsersPage accessToken={session.access_token} /> : null}
           {((activePage === 'vendor' || activePage === 'reporting') && !canUseVendor) ||
-          ((activePage === 'menu' || activePage === 'order') && !canUseCustomer) ? (
+          ((activePage === 'menu' || activePage === 'order' || activePage === 'history') && !canUseCustomer) ||
+          (activePage === 'admin' && !canUseAdmin) ? (
             <div className="menu-surface">
               <p className="alert-error">You do not have permission to access this module with your current role.</p>
             </div>

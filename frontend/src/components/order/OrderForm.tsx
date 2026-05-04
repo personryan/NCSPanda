@@ -15,7 +15,11 @@ const outletOptions = [
   { id: 'outlet-b6-noodles', label: 'B6 Noodles' },
 ];
 
-export default function OrderForm() {
+interface OrderFormProps {
+  accessToken: string;
+}
+
+export default function OrderForm({ accessToken }: Readonly<OrderFormProps>) {
   const [outletId, setOutletId] = useState(outletOptions[0].id);
   const [today] = useState(() => getLocalDateInputValue());
   const [slotDate, setSlotDate] = useState(today);
@@ -64,7 +68,7 @@ export default function OrderForm() {
         slotDate,
         slotId: selectedSlotId,
         items: selectedItems.map((item) => ({ itemId: item.itemId, quantity: item.quantity })),
-      });
+      }, accessToken);
       setFeedback({ type: 'ok', msg: `Order submitted successfully. ID: ${result.orderId}` });
       setQuantities({});
       setSelectedSlotId('');
