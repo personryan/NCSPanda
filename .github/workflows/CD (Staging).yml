@@ -183,7 +183,7 @@ jobs:
                 }
               }
             end
-          ) | .app.spec'
+          ) | .app.spec' app.json > fixed-spec.json
           cat fixed-spec.json | jq '.services[].autoscaling'
 
       - name: Deploy to DigitalOcean App Platform
