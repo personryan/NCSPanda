@@ -169,7 +169,7 @@ jobs:
             -H "Content-Type: application/json" \
             -o app.json
 
-          jq '.app.spec' app.json > final-spec.json
+          jq '.app.spec' app.json > fixed-spec.json
           cat fixed-spec.json | jq '.services[].autoscaling'
 
       - name: Deploy to DigitalOcean App Platform
