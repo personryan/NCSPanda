@@ -1,4 +1,5 @@
 10049	IGNORE	(Non-Storable Content: intentional for SPA entry points and scanner noise for static assets)
+10055	IGNORE	(CSP wildcard directive: CSP is present and intentionally allows configured HTTPS/WSS service endpoints)
 10054	IGNORE	(Cookie without SameSite Attribute: cookies are issued by the hosting/auth platform, not application code)
 10096	IGNORE	(Timestamp Disclosure - Unix: generated static asset metadata/content)
 10109	IGNORE	(Modern Web Application: informational baseline finding)
