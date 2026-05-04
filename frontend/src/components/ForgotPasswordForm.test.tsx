@@ -35,7 +35,7 @@ describe('ForgotPasswordForm', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Send reset link' }));
 
     await waitFor(() => {
-      expect(screen.getByText(/Check your email/i)).toBeTruthy();
+      expect(screen.getByRole('heading', { name: /Check your email/i })).toBeTruthy();
     });
 
     expect(resetPasswordForEmail).toHaveBeenCalledWith('user@example.com', {
