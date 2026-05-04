@@ -169,21 +169,19 @@ jobs:
             -H "Content-Type: application/json" \
             -o app.json
 
-          jq '.app.spec.services |= map(
-            if (.autoscaling != null) then
-              .autoscaling.metrics = (
-                .autoscaling.metrics // { "requests_per_second": 100 }
-              )
-            else
-              .autoscaling = {
-                "min_instance_count": 1,
-                "max_instance_count": 3,
-                "metrics": {
-                  "requests_per_second": 100
-                }
-              }
-            end
-          ) | .app.spec' app.json > fixed-spec.json
+          jq '
+            .app.spec.services |= map(
+              if (.autoscaling != null) then
+                .autoscaling.metrics.requests_per_second =
+                  (if (.autoscaling.metrics.requests_per_second | type) == "object"
+                  then .autoscaling.metrics.requests_per_second.per_instance
+                  else .autoscaling.metrics.requests_per_second
+                  end)
+              else .
+              end
+            )
+            | .app.spec
+          ' app.json > fixed-spec.json
           cat fixed-spec.json | jq '.services[].autoscaling'
 
       - name: Deploy to DigitalOcean App Platform
