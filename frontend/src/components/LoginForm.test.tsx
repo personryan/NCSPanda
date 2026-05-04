@@ -20,7 +20,7 @@ describe('LoginForm', () => {
   it('signs in and calls onSuccess', async () => {
     const onSuccess = jest.fn();
     signInWithPassword.mockResolvedValue({ error: null });
-    render(<LoginForm onSuccess={onSuccess} onSwitchToRegister={jest.fn()} />);
+    render(<LoginForm onSuccess={onSuccess} onSwitchToRegister={jest.fn()} onSwitchToForgotPassword={jest.fn()} />);
 
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'user@example.com' } });
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'password123' } });
@@ -33,17 +33,20 @@ describe('LoginForm', () => {
     });
   });
 
-  it('renders authentication errors and the register switch', async () => {
+  it('renders authentication errors and the register/forgot password switches', async () => {
     const onSwitchToRegister = jest.fn();
+    const onSwitchToForgotPassword = jest.fn();
     signInWithPassword.mockResolvedValue({ error: { message: 'Invalid login' } });
-    render(<LoginForm onSuccess={jest.fn()} onSwitchToRegister={onSwitchToRegister} />);
+    render(<LoginForm onSuccess={jest.fn()} onSwitchToRegister={onSwitchToRegister} onSwitchToForgotPassword={onSwitchToForgotPassword} />);
 
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'user@example.com' } });
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'password123' } });
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     fireEvent.click(screen.getByRole('button', { name: 'Sign up' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Forgot password?' }));
 
     expect(onSwitchToRegister).toHaveBeenCalledTimes(1);
+    expect(onSwitchToForgotPassword).toHaveBeenCalledTimes(1);
     expect((await screen.findByRole('alert')).textContent).toContain('Invalid login');
   });
 });

@@ -17,11 +17,17 @@ jest.mock('./services/supabase', () => ({
   },
 }));
 
-jest.mock('./components/LoginForm', () => (props: { onSwitchToRegister: () => void }) => (
-  <button type="button" onClick={props.onSwitchToRegister}>mock-login</button>
+jest.mock('./components/LoginForm', () => (props: { onSwitchToRegister?: () => void; onSwitchToForgotPassword?: () => void }) => (
+  <div>
+    <button type="button" onClick={props.onSwitchToRegister}>mock-login-register</button>
+    <button type="button" onClick={props.onSwitchToForgotPassword}>mock-login-forgot</button>
+  </div>
 ));
 jest.mock('./components/RegisterForm', () => (props: { onSwitchToLogin: () => void }) => (
-  <button type="button" onClick={props.onSwitchToLogin}>mock-register</button>
+  <button type="button" onClick={props.onSwitchToLogin}>mock-register-login</button>
+));
+jest.mock('./components/ForgotPasswordForm', () => (props: { onSwitchToLogin: () => void }) => (
+  <button type="button" onClick={props.onSwitchToLogin}>mock-forgot-login</button>
 ));
 jest.mock('./pages/Menu', () => () => <div>mock-menu-page</div>);
 jest.mock('./pages/Orders', () => () => <div>mock-orders-page</div>);
@@ -42,13 +48,17 @@ describe('App', () => {
     (fetchCurrentUserProfile as jest.Mock).mockResolvedValue({ role_id: 2 });
   });
 
-  it('shows login/register screens when unauthenticated', async () => {
+  it('shows login/register/forgot password screens when unauthenticated', async () => {
     (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: null } });
     render(<App />);
 
-    expect(await screen.findByText('mock-login')).toBeTruthy();
-    fireEvent.click(screen.getByText('mock-login'));
-    expect(screen.getByText('mock-register')).toBeTruthy();
+    expect(await screen.findByText('mock-login-register')).toBeTruthy();
+    fireEvent.click(screen.getByText('mock-login-register'));
+    expect(screen.getByText('mock-register-login')).toBeTruthy();
+    fireEvent.click(screen.getByText('mock-register-login'));
+    expect(screen.getByText('mock-login-register')).toBeTruthy();
+    fireEvent.click(screen.getByText('mock-login-forgot'));
+    expect(screen.getByText('mock-forgot-login')).toBeTruthy();
   });
 
   it('routes vendor users to vendor and reporting pages and signs out', async () => {
@@ -72,5 +82,16 @@ describe('App', () => {
     expect(screen.queryByRole('button', { name: 'Vendor Dashboard' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Place Order' }));
     expect(screen.getByText('mock-orders-page')).toBeTruthy();
+  });
+
+  it('shows forgot password form when user clicks forgot password and returns to login', async () => {
+    (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: null } });
+    render(<App />);
+
+    expect(await screen.findByText('mock-login-register')).toBeTruthy();
+    fireEvent.click(screen.getByText('mock-login-forgot'));
+    expect(screen.getByText('mock-forgot-login')).toBeTruthy();
+    fireEvent.click(screen.getByText('mock-forgot-login'));
+    expect(screen.getByText('mock-login-register')).toBeTruthy();
   });
 });
