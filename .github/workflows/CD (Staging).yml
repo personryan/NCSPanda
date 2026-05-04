@@ -168,7 +168,7 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.NCSPANDA_DOSTAGING }}" \
             -H "Content-Type: application/json" \
             -o app.json
-
+          # debug output to verify we got the app spec
           jq '.app.spec' app.json > fixed-spec.json
           cat fixed-spec.json | jq '.services[].autoscaling'
 
