@@ -26,8 +26,11 @@ jest.mock('./components/LoginForm', () => (props: { onSwitchToRegister?: () => v
 jest.mock('./components/RegisterForm', () => (props: { onSwitchToLogin: () => void }) => (
   <button type="button" onClick={props.onSwitchToLogin}>mock-register-login</button>
 ));
-jest.mock('./components/ForgotPasswordForm', () => (props: { onSwitchToLogin: () => void }) => (
-  <button type="button" onClick={props.onSwitchToLogin}>mock-forgot-login</button>
+jest.mock('./components/ResetPasswordForm', () => (props: { onReturnToLogin: () => void }) => (
+  <button type="button" onClick={props.onReturnToLogin}>mock-reset-login</button>
+));
+jest.mock('./components/ResetPasswordForm', () => (props: { onReturnToLogin: () => void }) => (
+  <button type="button" onClick={props.onReturnToLogin}>mock-reset-login</button>
 ));
 jest.mock('./pages/Menu', () => () => <div>mock-menu-page</div>);
 jest.mock('./pages/Orders', () => () => <div>mock-orders-page</div>);
@@ -92,6 +95,16 @@ describe('App', () => {
     fireEvent.click(screen.getByText('mock-login-forgot'));
     expect(screen.getByText('mock-forgot-login')).toBeTruthy();
     fireEvent.click(screen.getByText('mock-forgot-login'));
+    expect(screen.getByText('mock-login-register')).toBeTruthy();
+  });
+
+  it('shows reset password form when recovery hash is detected', async () => {
+    (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: null } });
+    window.location.hash = '#type=recovery&token=reset-token-123';
+    render(<App />);
+
+    expect(await screen.findByText('mock-reset-login')).toBeTruthy();
+    fireEvent.click(screen.getByText('mock-reset-login'));
     expect(screen.getByText('mock-login-register')).toBeTruthy();
   });
 });
