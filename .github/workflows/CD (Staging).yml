@@ -173,9 +173,13 @@ jobs:
               if .autoscaling != null then
                 .autoscaling.metrics.requests_per_second =
                   (if (.autoscaling.metrics.requests_per_second | type) == "object"
-                  then .autoscaling.metrics.requests_per_second.per_instance
+                  then (.autoscaling.metrics.requests_per_second.per_instance // 
+                        .autoscaling.metrics.requests_per_second.value // 
+                        .autoscaling.metrics.requests_per_second)
                   else .autoscaling.metrics.requests_per_second
                   end)
+                | .autoscaling.metrics.requests_per_second =
+                    { value: .autoscaling.metrics.requests_per_second }
               else .
               end
             )
