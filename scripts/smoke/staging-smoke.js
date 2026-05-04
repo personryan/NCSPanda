@@ -2,6 +2,7 @@
 /* eslint-disable no-console */
 
 const baseUrl = process.env.STAGING_API_BASE_URL;
+const smokeAuthToken = process.env.SMOKE_AUTH_TOKEN;
 
 if (!baseUrl) {
   console.error('STAGING_API_BASE_URL is required');
@@ -21,6 +22,15 @@ async function checkJson(url, options) {
     const preview = text.replace(/\s+/g, ' ').slice(0, 200);
     throw new Error(`${url} did not return JSON (${contentType}): ${preview}`);
   }
+}
+
+async function checkStatus(url, expectedStatus, options) {
+  const res = await fetch(url, options);
+  const text = await res.text();
+  if (res.status !== expectedStatus) {
+    throw new Error(`${url} expected ${expectedStatus} but got ${res.status}: ${text}`);
+  }
+  return text;
 }
 
 function apiUrl(path) {
@@ -46,20 +56,31 @@ function apiUrl(path) {
       slotDate: '2099-01-01',
       slotId: slots[0].slotId,
       items: [{ itemId: menu.items[0].itemId, quantity: 1 }],
-      customerId: 'smoke-customer',
     };
 
-    const order = await checkJson(apiUrl('api/orders'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-user-role': 'customer',
-      },
-      body: JSON.stringify(orderPayload),
-    });
+    if (smokeAuthToken) {
+      const order = await checkJson(apiUrl('api/orders'), {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${smokeAuthToken}`,
+          'Content-Type': 'application/json',
+          'x-user-role': 'customer',
+        },
+        body: JSON.stringify(orderPayload),
+      });
 
-    if (!order.orderId) {
-      throw new Error('Order smoke check failed: missing orderId');
+      if (!order.orderId) {
+        throw new Error('Order smoke check failed: missing orderId');
+      }
+    } else {
+      await checkStatus(apiUrl('api/orders'), 401, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-role': 'customer',
+        },
+        body: JSON.stringify(orderPayload),
+      });
     }
 
     const vendorOrders = await checkJson(
