@@ -98,6 +98,15 @@ export interface AdminUserPayload {
 }
 
 const API_BASE = getApiBaseUrl();
+const SAFE_PATH_SEGMENT = /^[A-Za-z0-9_-]+$/;
+
+function encodeSafePathSegment(value: string, fieldName: string): string {
+  if (!SAFE_PATH_SEGMENT.test(value)) {
+    throw new Error(`Invalid ${fieldName}`);
+  }
+
+  return encodeURIComponent(value);
+}
 
 export async function fetchMenuByOutlet(outletId: string): Promise<OutletMenu> {
   const response = await fetch(`${API_BASE}/api/menu?outletId=${encodeURIComponent(outletId)}`);
@@ -267,7 +276,8 @@ export async function updateAdminUser(
   userId: string,
   payload: AdminUserPayload,
 ): Promise<AdminUser> {
-  const response = await fetch(`${API_BASE}/api/admin/users/${encodeURIComponent(userId)}`, {
+  const safeUserId = encodeSafePathSegment(userId, 'user ID');
+  const response = await fetch(`${API_BASE}/api/admin/users/${safeUserId}`, {
     method: 'PATCH',
     headers: adminHeaders(accessToken),
     body: JSON.stringify(payload),
@@ -285,7 +295,8 @@ export async function softDeleteAdminUser(
   accessToken: string,
   userId: string,
 ): Promise<AdminUser> {
-  const response = await fetch(`${API_BASE}/api/admin/users/${encodeURIComponent(userId)}`, {
+  const safeUserId = encodeSafePathSegment(userId, 'user ID');
+  const response = await fetch(`${API_BASE}/api/admin/users/${safeUserId}`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${accessToken}` },
   });

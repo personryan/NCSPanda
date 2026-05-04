@@ -1,13 +1,15 @@
 import { useState, FormEvent } from 'react';
 import { supabase } from '../services/supabase';
 
+interface ForgotPasswordFormProps {
+  onSuccess: () => void;
+  onSwitchToLogin: () => void;
+}
+
 export default function ForgotPasswordForm({
   onSuccess,
   onSwitchToLogin,
-}: {
-  onSuccess: () => void;
-  onSwitchToLogin: () => void;
-}) {
+}: Readonly<ForgotPasswordFormProps>) {
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -19,7 +21,7 @@ export default function ForgotPasswordForm({
     setLoading(true);
 
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${globalThis.location.origin}/reset-password`,
     });
 
     setLoading(false);

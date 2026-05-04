@@ -120,6 +120,40 @@ function App() {
     );
   }
 
+  let unauthenticatedContent = (
+    <LoginForm
+      onSuccess={() => {}}
+      onSwitchToRegister={() => setShowRegister(true)}
+      onSwitchToForgotPassword={() => setShowForgotPassword(true)}
+    />
+  );
+
+  if (showResetPassword) {
+    unauthenticatedContent = (
+      <ResetPasswordForm
+        onSuccess={() => {
+          setShowResetPassword(false);
+          setSession(null);
+        }}
+        onReturnToLogin={() => setShowResetPassword(false)}
+      />
+    );
+  } else if (showForgotPassword) {
+    unauthenticatedContent = (
+      <ForgotPasswordForm
+        onSuccess={() => setShowForgotPassword(false)}
+        onSwitchToLogin={() => setShowForgotPassword(false)}
+      />
+    );
+  } else if (showRegister) {
+    unauthenticatedContent = (
+      <RegisterForm
+        onSuccess={() => setShowRegister(false)}
+        onSwitchToLogin={() => setShowRegister(false)}
+      />
+    );
+  }
+
   if (!session) {
     return (
       <div className="app-shell">
@@ -127,31 +161,7 @@ function App() {
           <span className="app-logo">NCS Panda</span>
         </header>
         <main className="app-main">
-          {showResetPassword ? (
-            <ResetPasswordForm
-              onSuccess={() => {
-                setShowResetPassword(false);
-                setSession(null);
-              }}
-              onReturnToLogin={() => setShowResetPassword(false)}
-            />
-          ) : showForgotPassword ? (
-            <ForgotPasswordForm
-              onSuccess={() => setShowForgotPassword(false)}
-              onSwitchToLogin={() => setShowForgotPassword(false)}
-            />
-          ) : showRegister ? (
-            <RegisterForm
-              onSuccess={() => setShowRegister(false)}
-              onSwitchToLogin={() => setShowRegister(false)}
-            />
-          ) : (
-            <LoginForm
-              onSuccess={() => {}}
-              onSwitchToRegister={() => setShowRegister(true)}
-              onSwitchToForgotPassword={() => setShowForgotPassword(true)}
-            />
-          )}
+          {unauthenticatedContent}
         </main>
       </div>
     );

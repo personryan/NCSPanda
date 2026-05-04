@@ -4,6 +4,6 @@ interface OrdersPageProps {
   accessToken: string;
 }
 
-export default function OrdersPage({ accessToken }: OrdersPageProps) {
+export default function OrdersPage({ accessToken }: Readonly<OrdersPageProps>) {
   return <OrderForm accessToken={accessToken} />;
 }

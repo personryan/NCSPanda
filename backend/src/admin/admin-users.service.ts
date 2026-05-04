@@ -12,7 +12,7 @@ export class AdminUsersService {
       include: { role: true },
     });
 
-    if (!actor || !actor.is_active || actor.role?.role_name !== 'admin') {
+    if (actor?.is_active !== true || actor.role?.role_name !== 'admin') {
       throw new ForbiddenException('Admin role is required');
     }
   }
@@ -36,14 +36,15 @@ export class AdminUsersService {
   async updateUser(userId: string, dto: UpdateAdminUserDto) {
     await this.getUser(userId);
 
+    const data: UpdateAdminUserDto = {};
+    if (typeof dto.role_id === 'number') data.role_id = dto.role_id;
+    if (typeof dto.first_name === 'string') data.first_name = dto.first_name;
+    if (typeof dto.last_name === 'string') data.last_name = dto.last_name;
+    if (typeof dto.is_active === 'boolean') data.is_active = dto.is_active;
+
     return this.prisma.user.update({
       where: { user_id: userId },
-      data: {
-        ...(dto.role_id !== undefined ? { role_id: dto.role_id } : {}),
-        ...(dto.first_name !== undefined ? { first_name: dto.first_name } : {}),
-        ...(dto.last_name !== undefined ? { last_name: dto.last_name } : {}),
-        ...(dto.is_active !== undefined ? { is_active: dto.is_active } : {}),
-      },
+      data,
       include: { role: true },
     });
   }

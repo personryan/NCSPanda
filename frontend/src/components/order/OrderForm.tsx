@@ -19,7 +19,7 @@ interface OrderFormProps {
   accessToken: string;
 }
 
-export default function OrderForm({ accessToken }: OrderFormProps) {
+export default function OrderForm({ accessToken }: Readonly<OrderFormProps>) {
   const [outletId, setOutletId] = useState(outletOptions[0].id);
   const [today] = useState(() => getLocalDateInputValue());
   const [slotDate, setSlotDate] = useState(today);

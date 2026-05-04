@@ -42,7 +42,7 @@ function toFormState(user: AdminUser): UserFormState {
   };
 }
 
-export default function AdminUsersPage({ accessToken }: AdminUsersPageProps) {
+export default function AdminUsersPage({ accessToken }: Readonly<AdminUsersPageProps>) {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [form, setForm] = useState<UserFormState>(emptyForm);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
@@ -148,22 +148,22 @@ export default function AdminUsersPage({ accessToken }: AdminUsersPageProps) {
             <div className="form-group">
               <label htmlFor="admin-first-name" className="form-label">First name</label>
               <input
-              id="admin-first-name"
-              className="form-input"
-              value={form.first_name}
-              onChange={(e) => setForm((current) => ({ ...current, first_name: e.target.value }))}
-              disabled={!editingUserId || saving}
-            />
+                id="admin-first-name"
+                className="form-input"
+                value={form.first_name}
+                onChange={(e) => setForm((current) => ({ ...current, first_name: e.target.value }))}
+                disabled={!editingUserId || saving}
+              />
             </div>
             <div className="form-group">
               <label htmlFor="admin-last-name" className="form-label">Last name</label>
               <input
-              id="admin-last-name"
-              className="form-input"
-              value={form.last_name}
-              onChange={(e) => setForm((current) => ({ ...current, last_name: e.target.value }))}
-              disabled={!editingUserId || saving}
-            />
+                id="admin-last-name"
+                className="form-input"
+                value={form.last_name}
+                onChange={(e) => setForm((current) => ({ ...current, last_name: e.target.value }))}
+                disabled={!editingUserId || saving}
+              />
             </div>
           </div>
           <div className="form-group">

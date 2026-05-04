@@ -19,7 +19,7 @@ function formatCreatedAt(value: string): string {
   }).format(new Date(value));
 }
 
-export default function OrderHistoryPage({ accessToken }: OrderHistoryPageProps) {
+export default function OrderHistoryPage({ accessToken }: Readonly<OrderHistoryPageProps>) {
   const [orders, setOrders] = useState<CustomerOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
