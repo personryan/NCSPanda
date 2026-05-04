@@ -188,6 +188,7 @@ jobs:
           app_name: ${{ env.DO_APP_NAME_STAGING }}
           print_build_logs: "true"
           print_deploy_logs: "true"
+          spec: fixed-spec.json
 
       - name: Staging Environment Health Check
         run: |
