@@ -160,17 +160,6 @@ jobs:
 
           echo "Restore request submitted."
 
-      - name: Deploy to DigitalOcean App Platform
-        uses: digitalocean/app_action/deploy@v2
-        env:
-          IMAGE_TAG_PERSONRYAN-NCSPANDA-BACKEND: ${{ env.IMAGE_TAG }}
-          IMAGE_TAG_PERSONRYAN-NCSPANDA-FRONTEND: ${{ env.IMAGE_TAG }}
-        with:
-          token: ${{ secrets.NCSPANDA_DOSTAGING }}
-          app_name: ${{ env.DO_APP_NAME_STAGING }}
-          print_build_logs: "true"
-          print_deploy_logs: "true"
-
       - name: Ensure autoscaling metrics exist
         env:
           DO_APP_ID: ${{ secrets.DO_STAGING_APP_ID }}
@@ -188,6 +177,17 @@ jobs:
             else .
             end
           ) | .app.spec' app.json > fixed-spec.json
+
+      - name: Deploy to DigitalOcean App Platform
+        uses: digitalocean/app_action/deploy@v2
+        env:
+          IMAGE_TAG_PERSONRYAN-NCSPANDA-BACKEND: ${{ env.IMAGE_TAG }}
+          IMAGE_TAG_PERSONRYAN-NCSPANDA-FRONTEND: ${{ env.IMAGE_TAG }}
+        with:
+          token: ${{ secrets.NCSPANDA_DOSTAGING }}
+          app_name: ${{ env.DO_APP_NAME_STAGING }}
+          print_build_logs: "true"
+          print_deploy_logs: "true"
 
       - name: Staging Environment Health Check
         run: |
