@@ -160,34 +160,6 @@ jobs:
 
           echo "Restore request submitted."
 
-      - name: Fetch current DO app spec
-        env:
-          DO_APP_ID: ${{ secrets.DO_STAGING_APP_ID }}
-        run: |
-          curl -sS -X GET "https://api.digitalocean.com/v2/apps/${{ env.DO_APP_ID }}" \
-            -H "Authorization: Bearer ${{ secrets.NCSPANDA_DOSTAGING }}" \
-            -H "Content-Type: application/json" \
-            -o app.json
-          jq '
-            .app.spec.services |= map(
-              if .autoscaling != null then
-                .autoscaling.metrics.requests_per_second =
-                  (if (.autoscaling.metrics.requests_per_second | type) == "object"
-                  then (.autoscaling.metrics.requests_per_second.per_instance // 
-                        .autoscaling.metrics.requests_per_second.value // 
-                        .autoscaling.metrics.requests_per_second)
-                  else .autoscaling.metrics.requests_per_second
-                  end)
-                | .autoscaling.metrics.requests_per_second =
-                    { value: .autoscaling.metrics.requests_per_second }
-              else .
-              end
-            )
-            | .app.spec
-          ' app.json > fixed-spec.json
-          # debug output to verify we got the app spec
-          cat fixed-spec.json | jq '.services[].autoscaling'
-
       - name: Deploy to DigitalOcean App Platform
         uses: digitalocean/app_action/deploy@v2
         env:
@@ -198,7 +170,6 @@ jobs:
           app_name: ${{ env.DO_APP_NAME_STAGING }}
           print_build_logs: "true"
           print_deploy_logs: "true"
-          app_spec_location: fixed-spec.json
 
       - name: Staging Environment Health Check
         run: |
