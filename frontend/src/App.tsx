@@ -36,7 +36,13 @@ function App() {
 
   useEffect(() => {
     const hash = globalThis.location.hash;
-    if (hash.includes('type=recovery')) {
+    const pathname = globalThis.location.pathname;
+    const hasRecoveryHash = hash.includes('type=recovery');
+    const hasResetErrorHash = hash.includes('error_code=otp_expired') || hash.includes('error=access_denied');
+    const normalizedPath = pathname.replace(/\/+$/, '');
+    const isResetPasswordPath = normalizedPath.endsWith('/reset-password');
+
+    if (hasRecoveryHash || hasResetErrorHash || isResetPasswordPath) {
       setShowResetPassword(true);
     }
   }, []);
