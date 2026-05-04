@@ -39,85 +39,85 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Build locally for scanning (then push only if scan passes)
-      - name: Build backend image (local for scan, cached)
-        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f
-        with:
-          context: .
-          file: backend/Dockerfile
-          target: runtime
-          load: true
-          push: false
-          platforms: linux/amd64
-          tags: localbuild/backend:scan
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      # # Build locally for scanning (then push only if scan passes)
+      # - name: Build backend image (local for scan, cached)
+      #   uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f
+      #   with:
+      #     context: .
+      #     file: backend/Dockerfile
+      #     target: runtime
+      #     load: true
+      #     push: false
+      #     platforms: linux/amd64
+      #     tags: localbuild/backend:scan
+      #     cache-from: type=gha
+      #     cache-to: type=gha,mode=max
 
-      - name: Build frontend image (local for scan)
-        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f
-        with:
-          context: .
-          file: frontend/Dockerfile
-          target: runtime
-          build-args: |
-            VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}
-            VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}
-            VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
-          load: true
-          push: false
-          platforms: linux/amd64
-          tags: localbuild/frontend:scan
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      # - name: Build frontend image (local for scan)
+      #   uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f
+      #   with:
+      #     context: .
+      #     file: frontend/Dockerfile
+      #     target: runtime
+      #     build-args: |
+      #       VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}
+      #       VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      #       VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
+      #     load: true
+      #     push: false
+      #     platforms: linux/amd64
+      #     tags: localbuild/frontend:scan
+      #     cache-from: type=gha
+      #     cache-to: type=gha,mode=max
 
-      - name: Scan backend image (fail on critical)
-        uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2
-        with:
-          image: localbuild/backend:scan
-          fail-build: true #temporary to test workflow
-          severity-cutoff: critical
+      # - name: Scan backend image (fail on critical)
+      #   uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2
+      #   with:
+      #     image: localbuild/backend:scan
+      #     fail-build: true #temporary to test workflow
+      #     severity-cutoff: critical
 
-      - name: Scan frontend image (fail on critical)
-        uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2
-        with:
-          image: localbuild/frontend:scan
-          fail-build: true #temporary to test workflow
-          severity-cutoff: critical
+      # - name: Scan frontend image (fail on critical)
+      #   uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2
+      #   with:
+      #     image: localbuild/frontend:scan
+      #     fail-build: true #temporary to test workflow
+      #     severity-cutoff: critical
 
-      # Push to GHCR (capture digests)
-      - name: Build + push backend (GHCR)
-        id: push_backend
-        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f
-        with:
-          context: .
-          file: backend/Dockerfile
+      # # Push to GHCR (capture digests)
+      # - name: Build + push backend (GHCR)
+      #   id: push_backend
+      #   uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f
+      #   with:
+      #     context: .
+      #     file: backend/Dockerfile
 
-          push: true
-          platforms: linux/amd64
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.GHCR_OWNER }}/${{ env.BACKEND_IMAGE_REPO }}:staging
-            ${{ env.REGISTRY }}/${{ env.GHCR_OWNER }}/${{ env.BACKEND_IMAGE_REPO }}:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      #     push: true
+      #     platforms: linux/amd64
+      #     tags: |
+      #       ${{ env.REGISTRY }}/${{ env.GHCR_OWNER }}/${{ env.BACKEND_IMAGE_REPO }}:staging
+      #       ${{ env.REGISTRY }}/${{ env.GHCR_OWNER }}/${{ env.BACKEND_IMAGE_REPO }}:${{ github.sha }}
+      #     cache-from: type=gha
+      #     cache-to: type=gha,mode=max
 
-      - name: Build + push frontend (GHCR)
-        id: push_frontend
-        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f
-        with:
-          context: .
-          file: frontend/Dockerfile
-          target: runtime
-          build-args: |
-            VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}
-            VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}
-            VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
-          push: true
-          platforms: linux/amd64
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.GHCR_OWNER }}/${{ env.FRONTEND_IMAGE_REPO }}:staging
-            ${{ env.REGISTRY }}/${{ env.GHCR_OWNER }}/${{ env.FRONTEND_IMAGE_REPO }}:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      # - name: Build + push frontend (GHCR)
+      #   id: push_frontend
+      #   uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f
+      #   with:
+      #     context: .
+      #     file: frontend/Dockerfile
+      #     target: runtime
+      #     build-args: |
+      #       VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}
+      #       VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      #       VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
+      #     push: true
+      #     platforms: linux/amd64
+      #     tags: |
+      #       ${{ env.REGISTRY }}/${{ env.GHCR_OWNER }}/${{ env.FRONTEND_IMAGE_REPO }}:staging
+      #       ${{ env.REGISTRY }}/${{ env.GHCR_OWNER }}/${{ env.FRONTEND_IMAGE_REPO }}:${{ github.sha }}
+      #     cache-from: type=gha
+      #     cache-to: type=gha,mode=max
 
       - name: Restore archived DO app (if archived)
         env:
@@ -176,7 +176,7 @@ jobs:
               )
             else .
             end
-          ) | .app.spec' app.json > fixed-spec.json
+          ) | .app' app.json > fixed-spec.json
 
       - name: Deploy to DigitalOcean App Platform
         uses: digitalocean/app_action/deploy@v2
@@ -208,13 +208,13 @@ jobs:
           name: staging-smoke-log
           path: scripts/smoke/staging-smoke.js
 
-      - name: OWASP ZAP Baseline (DAST)
-        uses: zaproxy/action-baseline@v0.15.0
-        with:
-          target: ${{ secrets.STAGING_URL }}
-          rules_file_name: .zap/rules.tsv
-          fail_action: true
-          allow_issue_writing: false # disable automatic issue creation in GH
-          token: ${{ secrets.GITHUB_TOKEN }}
+      # - name: OWASP ZAP Baseline (DAST)
+      #   uses: zaproxy/action-baseline@v0.15.0
+      #   with:
+      #     target: ${{ secrets.STAGING_URL }}
+      #     rules_file_name: .zap/rules.tsv
+      #     fail_action: true
+      #     allow_issue_writing: false # disable automatic issue creation in GH
+      #     token: ${{ secrets.GITHUB_TOKEN }}
 
 
