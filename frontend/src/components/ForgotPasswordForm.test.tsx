@@ -35,7 +35,7 @@ describe('ForgotPasswordForm', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Send reset link' }));
 
     await waitFor(() => {
-      expect(screen.getByText(/Check your email/i)).toBeInTheDocument();
+      expect(screen.getByText(/Check your email/i)).toBeTruthy();
     });
 
     expect(resetPasswordForEmail).toHaveBeenCalledWith('user@example.com', {
@@ -59,7 +59,7 @@ describe('ForgotPasswordForm', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send reset link' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('User not found');
+    expect((await screen.findByRole('alert')).textContent).toContain('User not found');
   });
 
   it('renders switch to login button and calls callback', async () => {
