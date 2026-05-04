@@ -171,20 +171,29 @@ jobs:
           print_build_logs: "true"
           print_deploy_logs: "true"
 
+      - name: Ensure autoscaling metrics exist
+        env:
+          DO_APP_ID: ${{ secrets.DO_STAGING_APP_ID }}
+        run: |
+          curl -sS -X GET "https://api.digitalocean.com/v2/apps/${{ env.DO_APP_ID }}" \
+            -H "Authorization: Bearer ${{ secrets.NCSPANDA_DOSTAGING }}" \
+            -H "Content-Type: application/json" \
+            -o app.json
+
+          jq '.app.spec.services |= map(
+            if .autoscaling then
+              .autoscaling.metrics = (
+                .autoscaling.metrics // { "requests_per_second": 100 }
+              )
+            else .
+            end
+          ) | .app.spec' app.json > fixed-spec.json
+
       - name: Staging Environment Health Check
         run: |
           # This loop pings the URL every 5 seconds, timing out after 5 minutes (300s)
           timeout 300s bash -c 'until curl -sIL ${{ secrets.STAGING_URL }} | grep "200"; do echo "Still waiting..."; sleep 5; done'
         shell: bash
-
-      - name: OWASP ZAP Baseline (DAST)
-        uses: zaproxy/action-baseline@v0.15.0
-        with:
-          target: ${{ secrets.STAGING_URL }}
-          rules_file_name: .zap/rules.tsv
-          fail_action: true
-          allow_issue_writing: false # disable automatic issue creation in GH
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Smoke Test
         env:
@@ -197,3 +206,14 @@ jobs:
         with:
           name: staging-smoke-log
           path: scripts/smoke/staging-smoke.js
+
+      - name: OWASP ZAP Baseline (DAST)
+        uses: zaproxy/action-baseline@v0.15.0
+        with:
+          target: ${{ secrets.STAGING_URL }}
+          rules_file_name: .zap/rules.tsv
+          fail_action: true
+          allow_issue_writing: false # disable automatic issue creation in GH
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+
