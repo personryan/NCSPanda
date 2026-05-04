@@ -184,6 +184,7 @@ jobs:
               }
             end
           ) | .app.spec'
+          cat fixed-spec.json | jq '.services[].autoscaling'
 
       - name: Deploy to DigitalOcean App Platform
         uses: digitalocean/app_action/deploy@v2
