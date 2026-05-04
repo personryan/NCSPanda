@@ -160,24 +160,6 @@ jobs:
 
           echo "Restore request submitted."
 
-      - name: Ensure autoscaling metrics exist
-        env:
-          DO_APP_ID: ${{ secrets.DO_PRODUCTION_APP_ID }}
-        run: |
-          curl -sS -X GET "https://api.digitalocean.com/v2/apps/${{ env.DO_APP_ID }}" \
-            -H "Authorization: Bearer ${{ secrets.NCSPANDA_DOSTAGING }}" \
-            -H "Content-Type: application/json" \
-            -o app.json
-
-          jq '.app.spec.services |= map(
-            if .autoscaling then
-              .autoscaling.metrics = (
-                .autoscaling.metrics // { "requests_per_second": 100 }
-              )
-            else .
-            end
-          ) | .app.spec' app.json > fixed-spec.json
-
       - name: Deploy to DigitalOcean App Platform
         uses: digitalocean/app_action/deploy@v2
         env:
