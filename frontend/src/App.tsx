@@ -4,6 +4,7 @@ import { supabase } from './services/supabase';
 import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
 import ForgotPasswordForm from './components/ForgotPasswordForm';
+import ResetPasswordForm from './components/ResetPasswordForm';
 import MenuPage from './pages/Menu';
 import OrdersPage from './pages/Orders';
 import OrderHistoryPage from './pages/OrderHistory';
@@ -17,6 +18,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [showRegister, setShowRegister] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(false);
   const [activePage, setActivePage] = useState<'menu' | 'order' | 'history' | 'vendor' | 'reporting' | 'admin' >('menu');
   const [profileRoleId, setProfileRoleId] = useState<number | null>(null);
 
@@ -30,6 +32,13 @@ function App() {
       (_event, session) => setSession(session),
     );
     return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const hash = globalThis.location.hash;
+    if (hash.includes('type=recovery')) {
+      setShowResetPassword(true);
+    }
   }, []);
 
   useEffect(() => {
@@ -112,7 +121,15 @@ function App() {
           <span className="app-logo">NCS Panda</span>
         </header>
         <main className="app-main">
-          {showForgotPassword ? (
+          {showResetPassword ? (
+            <ResetPasswordForm
+              onSuccess={() => {
+                setShowResetPassword(false);
+                setSession(null);
+              }}
+              onReturnToLogin={() => setShowResetPassword(false)}
+            />
+          ) : showForgotPassword ? (
             <ForgotPasswordForm
               onSuccess={() => setShowForgotPassword(false)}
               onSwitchToLogin={() => setShowForgotPassword(false)}
