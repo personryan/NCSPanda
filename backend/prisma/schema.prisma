@@ -92,6 +92,7 @@ model Order {
 
   @@index([outlet_id])
   @@index([outlet_id, slot_date])
+  @@index([customer_id, created_at])
   @@map("orders")
 }
 

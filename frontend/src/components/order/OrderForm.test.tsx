@@ -49,7 +49,7 @@ describe('OrderForm', () => {
   });
 
   it('validates selection before submitting', async () => {
-    render(<OrderForm />);
+    render(<OrderForm accessToken="token-1" />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Submit pre-order' }));
     expect(await screen.findByText('Please select a pickup slot before submitting.')).toBeTruthy();
@@ -60,7 +60,7 @@ describe('OrderForm', () => {
   });
 
   it('submits a selected item and resets the order', async () => {
-    render(<OrderForm />);
+    render(<OrderForm accessToken="token-1" />);
 
     fireEvent.click(await screen.findByRole('button', { name: /12:00/ }));
     fireEvent.click(screen.getAllByRole('button', { name: '+' })[0]);
@@ -72,6 +72,7 @@ describe('OrderForm', () => {
         slotId: 'slot-1',
         items: [{ itemId: 'item-1', quantity: 1 }],
       }),
+      'token-1',
     );
     expect(await screen.findByText('Order submitted successfully. ID: ord-1')).toBeTruthy();
   });
@@ -79,7 +80,7 @@ describe('OrderForm', () => {
   it('shows loading errors from menu, slots, and order submission', async () => {
     (fetchMenuByOutlet as jest.Mock).mockRejectedValueOnce(new Error('menu failed'));
     (fetchPickupSlots as jest.Mock).mockRejectedValueOnce(new Error('slot failed'));
-    const { unmount } = render(<OrderForm />);
+    const { unmount } = render(<OrderForm accessToken="token-1" />);
 
     expect(await screen.findByText('slot failed')).toBeTruthy();
     unmount();
@@ -87,7 +88,7 @@ describe('OrderForm', () => {
     (fetchMenuByOutlet as jest.Mock).mockResolvedValue(menu);
     (fetchPickupSlots as jest.Mock).mockResolvedValue(slots);
     (createOrder as jest.Mock).mockRejectedValueOnce(new Error('order failed'));
-    render(<OrderForm />);
+    render(<OrderForm accessToken="token-1" />);
     fireEvent.click(await screen.findByRole('button', { name: /12:00/ }));
     fireEvent.click(screen.getAllByRole('button', { name: '+' })[0]);
     fireEvent.click(screen.getByRole('button', { name: 'Submit pre-order' }));

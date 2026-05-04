@@ -10,6 +10,8 @@ import { UsersService } from '../users/users.service';
 import { VendorOrdersController } from '../vendor-orders/vendor-orders.controller';
 import { VendorOrdersService } from '../vendor-orders/vendor-orders.service';
 
+declare const jest: any;
+
 export const TEST_DATE = '2099-01-01';
 export const OUTLET_ID = 'outlet-integration';
 export const CUSTOMER_ID = '11111111-1111-4111-8111-111111111111';
@@ -93,11 +95,22 @@ export class InMemoryPrisma {
       return order;
     }),
     findMany: jest.fn(async (args: any) => this.orders
-      .filter((order) => order.outlet_id === args.where.outlet_id)
+      .filter((order) => !args.where.outlet_id || order.outlet_id === args.where.outlet_id)
+      .filter((order) => !args.where.customer_id || order.customer_id === args.where.customer_id)
       .filter((order) => !args.where.slot_date || this.sameDate(order.slot_date, args.where.slot_date))
-      .filter((order) => !args.where.status || order.status === args.where.status)),
+      .filter((order) => !args.where.status || order.status === args.where.status)
+      .map((order) => (args.include?.outlet ? {
+        ...order,
+        outlet: this.outlets.find((outlet) => outlet.outlet_id === order.outlet_id) ?? null,
+      } : order))),
     findUnique: jest.fn(async (args: any) => (
       this.orders.find((order) => order.order_id === args.where.order_id) ?? null
+    )),
+    findFirst: jest.fn(async (args: any) => (
+      this.orders.find((order) => (
+        order.order_id === args.where.order_id &&
+        order.customer_id === args.where.customer_id
+      )) ?? null
     )),
     update: jest.fn(async (args: any) => {
       const order = this.orders.find((candidate) => candidate.order_id === args.where.order_id);
@@ -230,7 +243,7 @@ export function createIntegrationHarness() {
   return {
     prisma,
     menuController: new MenuController(menuService),
-    ordersController: new OrdersController(ordersService),
+    ordersController: new OrdersController(ordersService, supabaseAuth as any),
     vendorOrdersController: new VendorOrdersController(vendorOrdersService),
     usersController: new UsersController(usersService),
     authGuard: new AuthGuard(supabaseAuth as any),

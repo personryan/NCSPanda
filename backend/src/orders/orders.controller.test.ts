@@ -2,6 +2,7 @@ import { UnauthorizedException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import { OrdersController } from './orders.controller';
 import { OrdersService } from './orders.service';
+import { SupabaseAuthService } from '../auth/supabase-auth.service';
 
 const mockOrder = {
   orderId: 'ord_test_123',
@@ -16,9 +17,15 @@ const mockOrder = {
 
 const mockOrdersService = {
   createOrder: vi.fn().mockResolvedValue(mockOrder),
+  listOrdersForCustomer: vi.fn().mockResolvedValue([mockOrder]),
   getOrderById: vi.fn().mockResolvedValue(mockOrder),
+  getOrderByIdForCustomer: vi.fn().mockResolvedValue(mockOrder),
   updateOrderStatus: vi.fn().mockResolvedValue({ ...mockOrder, status: 'preparing' as const }),
 } as unknown as OrdersService;
+
+const mockSupabaseAuthService = {
+  validateAccessToken: vi.fn().mockResolvedValue({ id: 'customer-123', email: 'customer@example.com' }),
+} as unknown as SupabaseAuthService;
 
 const payload = {
   outletId: 'outlet-b6-chicken-rice',
@@ -28,25 +35,54 @@ const payload = {
 };
 
 describe('OrdersController', () => {
-  const controller = new OrdersController(mockOrdersService);
+  const controller = new OrdersController(mockOrdersService, mockSupabaseAuthService);
 
   it('blocks non-customer role from creating orders', async () => {
-    await expect(controller.createOrder(payload, 'vendor')).rejects.toThrow(UnauthorizedException);
+    await expect(
+      controller.getOrderTracking('ord_test_123', { headers: {} } as any),
+    ).rejects.toThrow(UnauthorizedException);
   });
 
-  it('allows customer role to create order', async () => {
-    const result = await controller.createOrder(payload, 'customer');
+  it('creates orders for the authenticated customer', async () => {
+    const result = await controller.createOrder(payload, {
+      user: { id: 'customer-123', email: 'customer@example.com' },
+    } as any);
     expect(result.orderId).toBe('ord_test_123');
+    expect(mockOrdersService.createOrder).toHaveBeenCalledWith(payload, 'customer-123');
   });
 
-  it('returns tracking details for customer role', async () => {
-    const result = await controller.getOrderTracking('ord_test_123', 'customer');
+  it('returns authenticated customer order history', async () => {
+    const result = await controller.listMyOrders({
+      user: { id: 'customer-123', email: 'customer@example.com' },
+    } as any);
+
+    expect(result).toEqual([mockOrder]);
+    expect(mockOrdersService.listOrdersForCustomer).toHaveBeenCalledWith('customer-123');
+  });
+
+  it('returns customer tracking details only through token-owned lookup', async () => {
+    const result = await controller.getOrderTracking('ord_test_123', {
+      headers: { authorization: 'Bearer token-1' },
+    } as any);
     expect(result.orderId).toBe('ord_test_123');
+    expect(mockOrdersService.getOrderByIdForCustomer).toHaveBeenCalledWith(
+      'ord_test_123',
+      'customer-123',
+    );
+  });
+
+  it('keeps vendor tracking access header-based', async () => {
+    const result = await controller.getOrderTracking('ord_test_123', {
+      headers: { 'x-user-role': 'vendor' },
+    } as any);
+
+    expect(result.orderId).toBe('ord_test_123');
+    expect(mockOrdersService.getOrderById).toHaveBeenCalledWith('ord_test_123');
   });
 
   it('blocks status update for non-vendor role', async () => {
     await expect(
-      controller.updateOrderStatus('ord_test_123', { status: 'preparing' }, 'customer'),
+      controller.updateOrderStatus('ord_test_123', { status: 'preparing' }, { headers: {} } as any),
     ).rejects.toThrow(UnauthorizedException);
   });
 
@@ -54,7 +90,7 @@ describe('OrdersController', () => {
     const result = await controller.updateOrderStatus(
       'ord_test_123',
       { status: 'preparing' },
-      'vendor',
+      { headers: { 'x-user-role': 'vendor' } } as any,
     );
     expect(result.status).toBe('preparing');
   });

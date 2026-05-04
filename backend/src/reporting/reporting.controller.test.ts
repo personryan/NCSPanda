@@ -18,9 +18,12 @@ const mockService = {
 describe('ReportingController', () => {
   const controller = new ReportingController(mockService);
 
-  it('blocks non-vendor and non-admin calls', () => {
+  it('blocks non-vendor calls', () => {
     expect(() =>
       controller.getVendorSummary({ outletId: 'outlet-b6-chicken-rice' }, 'customer'),
+    ).toThrow(UnauthorizedException);
+    expect(() =>
+      controller.getVendorSummary({ outletId: 'outlet-b6-chicken-rice' }, 'admin'),
     ).toThrow(UnauthorizedException);
   });
 
