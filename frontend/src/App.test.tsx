@@ -128,4 +128,12 @@ describe('App', () => {
     fireEvent.click(screen.getByText('mock-reset-login'));
     expect(screen.getByText('mock-login-register')).toBeTruthy();
   });
+
+  it('shows reset password form when expired reset hash is detected', async () => {
+    (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: null } });
+    globalThis.location.hash = '#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired&sb=';
+    render(<App />);
+
+    expect(await screen.findByText('mock-reset-login')).toBeTruthy();
+  });
 });
