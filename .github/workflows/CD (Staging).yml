@@ -181,6 +181,7 @@ jobs:
         uses: zaproxy/action-baseline@v0.15.0
         with:
           target: ${{ secrets.STAGING_URL }}
+          rules_file_name: .zap/rules.tsv
           fail_action: true
           allow_issue_writing: false # disable automatic issue creation in GH
           token: ${{ secrets.GITHUB_TOKEN }}
