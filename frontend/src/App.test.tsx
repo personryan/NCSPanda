@@ -46,7 +46,7 @@ const session = {
 
 describe('App', () => {
   beforeEach(() => {
-    window.location.hash = '';
+    globalThis.location.hash = '';
     (supabase.auth.onAuthStateChange as jest.Mock).mockReturnValue({
       data: { subscription: { unsubscribe: jest.fn() } },
     });
@@ -117,7 +117,7 @@ describe('App', () => {
 
   it('shows reset password form when recovery hash is detected', async () => {
     (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: null } });
-    window.location.hash = '#type=recovery&token=reset-token-123';
+    globalThis.location.hash = '#type=recovery&token=reset-token-123';
     render(<App />);
 
     expect(await screen.findByText('mock-reset-login')).toBeTruthy();

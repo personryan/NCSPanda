@@ -5,8 +5,8 @@ export default function ResetPasswordForm({
   onSuccess,
   onReturnToLogin,
 }: {
-  onSuccess: () => void;
-  onReturnToLogin: () => void;
+  readonly onSuccess: () => void;
+  readonly onReturnToLogin: () => void;
 }) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -71,7 +71,7 @@ export default function ResetPasswordForm({
     );
   }
 
-  if (error && error.includes('Invalid or expired')) {
+  if (error?.includes('Invalid or expired')) {
     return (
       <div className="card">
         <h2 style={{ marginBottom: '1.5rem' }}>Reset link expired</h2>

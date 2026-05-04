@@ -35,7 +35,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const hash = window.location.hash;
+    const hash = globalThis.location.hash;
     if (hash.includes('type=recovery')) {
       setShowResetPassword(true);
     }
