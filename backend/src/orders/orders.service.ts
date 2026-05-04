@@ -14,6 +14,7 @@ export type OrderStatus = 'received' | 'preparing' | 'ready';
 export interface StoredOrder {
   orderId: string;
   outletId: string;
+  outletName?: string;
   customerId: string;
   slotDate: string;
   slotId: string;
@@ -35,7 +36,7 @@ export class OrdersService {
     @Inject(PickupSlotsService) private readonly pickupSlotsService: PickupSlotsService,
   ) {}
 
-  async createOrder(payload: CreateOrderDto): Promise<StoredOrder> {
+  async createOrder(payload: CreateOrderDto, customerId: string): Promise<StoredOrder> {
     if (!payload.items?.length) {
       throw new BadRequestException('Order must contain at least one item');
     }
@@ -63,7 +64,7 @@ export class OrdersService {
     const order = await this.prisma.order.create({
       data: {
         outlet_id: payload.outletId,
-        customer_id: payload.customerId || 'customer-anonymous',
+        customer_id: customerId,
         slot_date: new Date(payload.slotDate),
         slot_id: payload.slotId,
         status: 'received',
@@ -80,6 +81,19 @@ export class OrdersService {
     });
 
     return this.toStoredOrder(order);
+  }
+
+  async listOrdersForCustomer(customerId: string): Promise<StoredOrder[]> {
+    const orders = await this.prisma.order.findMany({
+      where: { customer_id: customerId },
+      include: {
+        items: true,
+        outlet: { select: { outlet_name: true } },
+      },
+      orderBy: { created_at: 'desc' },
+    });
+
+    return orders.map((order) => this.toStoredOrder(order));
   }
 
   async listOrdersForVendor(filters: {
@@ -103,6 +117,19 @@ export class OrdersService {
   async getOrderById(orderId: string): Promise<StoredOrder> {
     const order = await this.prisma.order.findUnique({
       where: { order_id: orderId },
+      include: { items: true },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    return this.toStoredOrder(order);
+  }
+
+  async getOrderByIdForCustomer(orderId: string, customerId: string): Promise<StoredOrder> {
+    const order = await this.prisma.order.findFirst({
+      where: { order_id: orderId, customer_id: customerId },
       include: { items: true },
     });
 
@@ -159,6 +186,9 @@ export class OrdersService {
       slot_id: string;
       status: string;
       created_at: Date;
+      outlet?: {
+        outlet_name: string;
+      } | null;
       items: Array<{
         item_id: string;
         name: string;
@@ -170,6 +200,7 @@ export class OrdersService {
     return {
       orderId: order.order_id,
       outletId: order.outlet_id,
+      outletName: order.outlet?.outlet_name,
       customerId: order.customer_id,
       slotDate: order.slot_date.toISOString().split('T')[0],
       slotId: order.slot_id,

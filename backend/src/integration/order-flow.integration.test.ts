@@ -12,11 +12,10 @@ describe('Flow 1: Order Flow', () => {
 
     const created = await ordersController.createOrder({
       outletId: OUTLET_ID,
-      customerId: CUSTOMER_ID,
       slotDate: TEST_DATE,
       slotId,
       items: [{ itemId: 'item-original', quantity: 2, notes: 'less rice' }],
-    }, 'customer');
+    }, { user: { id: CUSTOMER_ID, email: 'casey@example.com' } } as any);
 
     expect(prisma.orders).toHaveLength(1);
     expect(prisma.orders[0]).toMatchObject({
@@ -41,7 +40,7 @@ describe('Flow 1: Order Flow', () => {
     const updated = await ordersController.updateOrderStatus(
       created.orderId,
       { status: 'preparing' },
-      'vendor',
+      { headers: { 'x-user-role': 'vendor' } } as any,
     );
 
     expect(updated.status).toBe('preparing');
