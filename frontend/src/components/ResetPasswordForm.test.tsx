@@ -26,7 +26,7 @@ describe('ResetPasswordForm', () => {
     render(<ResetPasswordForm onSuccess={jest.fn()} onReturnToLogin={jest.fn()} />);
 
     await waitFor(() => {
-      expect(screen.getByText(/Invalid or expired reset link/i)).toBeInTheDocument();
+      expect(screen.getByText(/Invalid or expired reset link/i)).toBeTruthy();
     });
   });
 
@@ -66,7 +66,7 @@ describe('ResetPasswordForm', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Reset password' }));
 
-    expect(screen.getByText(/at least 8 characters/i)).toBeInTheDocument();
+    expect(screen.getByText(/at least 8 characters/i)).toBeTruthy();
   });
 
   it('validates password confirmation match', async () => {
@@ -84,7 +84,7 @@ describe('ResetPasswordForm', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Reset password' }));
 
-    expect(screen.getByText(/passwords do not match/i)).toBeInTheDocument();
+    expect(screen.getByText(/passwords do not match/i)).toBeTruthy();
   });
 
   it('shows error from Supabase on failed reset', async () => {
@@ -106,7 +106,7 @@ describe('ResetPasswordForm', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Reset password' }));
 
-    expect(await screen.findByText(/Password reset failed/)).toBeInTheDocument();
+    expect(await screen.findByText(/Password reset failed/)).toBeTruthy();
   });
 
   it('returns to login when clicking back button', async () => {

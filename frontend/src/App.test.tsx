@@ -46,6 +46,7 @@ const session = {
 
 describe('App', () => {
   beforeEach(() => {
+    window.location.hash = '';
     (supabase.auth.onAuthStateChange as jest.Mock).mockReturnValue({
       data: { subscription: { unsubscribe: jest.fn() } },
     });
